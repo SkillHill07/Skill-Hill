@@ -1,0 +1,161 @@
+{
+  "version": 1,
+  "skills": {
+    "accessibility": {
+      "source": "addyosmani/web-quality-skills",
+      "sourceType": "github",
+      "skillPath": "skills/accessibility/SKILL.md",
+      "computedHash": "ebfa09617a2ac4fd64afd73267726b787145a8d14294df3f8802b462c91594ab"
+    },
+    "backend-development": {
+      "source": "mrgoonie/claudekit-skills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/backend-development/SKILL.md",
+      "computedHash": "dedbc6bb7afa2c16ac6b3451a435a198af0e5d3786b30a15d40910ba207fd6e3"
+    },
+    "backend-patterns": {
+      "source": "affaan-m/everything-claude-code",
+      "sourceType": "github",
+      "skillPath": "skills/backend-patterns/SKILL.md",
+      "computedHash": "82ef426e6923d9ede1213e2062a0f069071afa3013f61b96d57db93d2dc2410c"
+    },
+    "design-taste-frontend": {
+      "source": "leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/taste-skill/SKILL.md",
+      "computedHash": "899b84384f74f540ea5284d9b2e9234e050998b42eacc805410b518d4226c0b3"
+    },
+    "express-typescript": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "skillPath": "express-typescript/SKILL.md",
+      "computedHash": "77bf2fb3933e0487ba30d6269342d5b1ce02210f3aee892cd202e295b9fde99a"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "781bd6d3f9b19f8c9af6b53d8d0e4876d0183841b565db34ca7092ffa412d111"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "93f53fd1c0352d3d7ec17b8f73d7351bf76f4821e55d123c9d2abc2c53ba48e4"
+    },
+    "frontend-design-review": {
+      "source": "microsoft/skills",
+      "sourceType": "github",
+      "skillPath": ".github/skills/frontend-design-review/SKILL.md",
+      "computedHash": "ab7eeeef16d3583172fe0a91a42b85c79cd5e29f79e027dbaa886fce5087e055"
+    },
+    "frontend-dev": {
+      "source": "MiniMax-AI/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-dev/SKILL.md",
+      "computedHash": "ffee882ad30a0791c216973b21f607f25e2d8e659695559f8c7cf0821140e9aa"
+    },
+    "fullstack-dev": {
+      "source": "MiniMax-AI/skills",
+      "sourceType": "github",
+      "skillPath": "skills/fullstack-dev/SKILL.md",
+      "computedHash": "e901a7302603fbc1c3f2a520feaaf8fead3c25dba8b77411f2f9593353b89959"
+    },
+    "improve-codebase-architecture": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
+      "computedHash": "569299a60c8e93880f3b3c1eca55578f58f7e1a4155876edb4cb814da3d6b3ea"
+    },
+    "leetcode-teacher": {
+      "source": "jamesrochabrun/skills",
+      "sourceType": "github",
+      "skillPath": "skills/leetcode-teacher/SKILL.md",
+      "computedHash": "4c7e224cb71afd3101b02a5d7b91010c18c579579c368617770bbc00772784dd"
+    },
+    "mongodb-natural-language-querying": {
+      "source": "mongodb/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/mongodb-natural-language-querying/SKILL.md",
+      "computedHash": "0f2bb5c5fc7b18898160bd348372587adaa37ec58e950c62310b6064cda3fbc8"
+    },
+    "mongodb-query-optimizer": {
+      "source": "mongodb/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/mongodb-query-optimizer/SKILL.md",
+      "computedHash": "dad6bb8b3b21d75b59b18e326d780b55ad849a9c3110ad44ee23d1856130a79a"
+    },
+    "mongodb-search-and-ai": {
+      "source": "mongodb/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/mongodb-search-and-ai/SKILL.md",
+      "computedHash": "2db568cb4080dfb80405119bebbe926ea762d1f694347427a764a150b4ae4787"
+    },
+    "nodejs-express-server": {
+      "source": "aj-geddes/useful-ai-prompts",
+      "sourceType": "github",
+      "skillPath": "skills/nodejs-express-server/SKILL.md",
+      "computedHash": "8a7fe50351131f99b7bc7750bb4be6e7cbd7919b3b346c8fc7f857fb1ecad059"
+    },
+    "performance": {
+      "source": "addyosmani/web-quality-skills",
+      "sourceType": "github",
+      "skillPath": "skills/performance/SKILL.md",
+      "computedHash": "646931a3af896ae12a3cad3d762668cb6487fe3ab179daf8fdc974fb79acfe49"
+    },
+    "ponytail": {
+      "source": "dietrichgebert/ponytail",
+      "sourceType": "github",
+      "skillPath": "skills/ponytail/SKILL.md",
+      "computedHash": "9e8d05cbbaf6dc38f0cffc924c09b3cbe76d94ba4ba0d09bde803da2f8c6b5a0"
+    },
+    "ponytail-audit": {
+      "source": "dietrichgebert/ponytail",
+      "sourceType": "github",
+      "skillPath": "skills/ponytail-audit/SKILL.md",
+      "computedHash": "0406899b920175367e43ca6bf3c2e5b9ba676a9bcf1fe35b57dc75fd15cfa1e2"
+    },
+    "ponytail-debt": {
+      "source": "dietrichgebert/ponytail",
+      "sourceType": "github",
+      "skillPath": "skills/ponytail-debt/SKILL.md",
+      "computedHash": "8e7448ee88cb22234f73d1b9b8ad5f815ee32bc33ada062281b9723a961e6d92"
+    },
+    "ponytail-gain": {
+      "source": "dietrichgebert/ponytail",
+      "sourceType": "github",
+      "skillPath": "skills/ponytail-gain/SKILL.md",
+      "computedHash": "88b962b5a1af59f7a663c4f219763bbdc9ac1983ff428186d0e69d43fe8e3753"
+    },
+    "ponytail-help": {
+      "source": "dietrichgebert/ponytail",
+      "sourceType": "github",
+      "skillPath": "skills/ponytail-help/SKILL.md",
+      "computedHash": "52565f3dc387c320ca6da9dc3a73e5a9abddc7a28f8a3c944d25009db2eaaa9c"
+    },
+    "ponytail-review": {
+      "source": "dietrichgebert/ponytail",
+      "sourceType": "github",
+      "skillPath": "skills/ponytail-review/SKILL.md",
+      "computedHash": "d68b62a2fb83972ca8a9f7f20851baf6563bb7908bc81002214c6c1141486c25"
+    },
+    "razorpay": {
+      "source": "membranedev/application-skills",
+      "sourceType": "github",
+      "skillPath": "skills/razorpay/SKILL.md",
+      "computedHash": "fb269604cac997a3fc139d0a5fdea21255597c1d997337f345866ac3b7e1f96d"
+    },
+    "security-review": {
+      "source": "getsentry/skills",
+      "sourceType": "github",
+      "skillPath": "skills/security-review/SKILL.md",
+      "computedHash": "1eee1e41aa0a0e75dbbe0cac387e3d61bedf51af1888f184301a173731e6973e"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "f3bc47f890f42a44db1007ab390709ec368e4b8c089baee6b0007182236ac474"
+    }
+  }
+}
