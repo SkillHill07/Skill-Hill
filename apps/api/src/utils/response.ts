@@ -14,6 +14,12 @@ export function sendError(
   error: string,
   status = 400,
   message?: string,
+  code?: string,
 ) {
-  res.status(status).json({ success: false, error, message })
+  res.status(status).json({
+    success: false,
+    error,
+    ...(message ? { message } : {}),
+    ...(code ? { code } : {}),
+  })
 }
