@@ -32,9 +32,9 @@ function getTransporter(): nodemailer.Transporter {
 
     // Real SMTP — Gmail app passwords work with smtp.gmail.com:587
     transporter = nodemailer.createTransport({
-      host: config.SMTP_HOST,
-      port: config.SMTP_PORT,
-      secure: config.SMTP_PORT === 465,
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
       auth: {
         user: config.EMAIL_USER,
         pass: config.EMAIL_APP_PASSWORD,
@@ -54,7 +54,7 @@ interface SendEmailOptions {
 
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
   const transport = getTransporter()
-  const from = config.SMTP_FROM || config.EMAIL_USER || "noreply@skillsarena.com"
+  const from = config.EMAIL_USER || "noreply@skillsarena.com"
 
   await transport.sendMail({
     from,

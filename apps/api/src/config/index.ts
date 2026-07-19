@@ -42,12 +42,9 @@ export const config = {
     "http://localhost:4000/auth/github/callback",
   ),
   FRONTEND_URL: env("FRONTEND_URL", "http://localhost:3000"),
-  // Email — uses Gmail SMTP with app password by default
-  SMTP_HOST: env("SMTP_HOST", "smtp.gmail.com"),
-  SMTP_PORT: Number(env("SMTP_PORT", "587")),
+  // Email — uses Gmail SMTP with app password
   EMAIL_USER: env("EMAIL_USER", ""),
   EMAIL_APP_PASSWORD: env("EMAIL_APP_PASSWORD", ""),
-  SMTP_FROM: env("SMTP_FROM", ""),
   NODE_ENV: env("NODE_ENV", "development"),
 
   // Token durations

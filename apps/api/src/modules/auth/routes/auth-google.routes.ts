@@ -7,6 +7,7 @@ import {
 import { authenticate } from "../middleware/auth.middleware.js"
 import { config } from "../../../config/index.js"
 import { sendError, sendSuccess } from "../../../utils/response.js"
+import { setAuthCookies } from "../../../utils/cookies.js"
 import type { Request, Response, NextFunction } from "express"
 
 export const googleAuthRouter: Router = Router()
@@ -103,11 +104,12 @@ googleAuthRouter.get(
 
       const { tokens, isNewUser } = await handleGoogleCallback(code)
 
-      // Redirect frontend with tokens
-      const frontendUrl = config.FRONTEND_URL
-      const redirectUrl = `${frontendUrl}/auth/callback?accessToken=${encodeURIComponent(tokens.accessToken)}&refreshToken=${encodeURIComponent(tokens.refreshToken)}&isNewUser=${isNewUser}`
+      // Set HttpOnly cookies on the API domain
+      setAuthCookies(res, tokens.accessToken, tokens.refreshToken)
 
-      res.redirect(redirectUrl)
+      // Redirect to frontend — tokens are in cookies, not the URL
+      const frontendUrl = config.FRONTEND_URL
+      res.redirect(`${frontendUrl}/auth/callback?isNewUser=${isNewUser}`)
     } catch (err) {
       next(err)
     }

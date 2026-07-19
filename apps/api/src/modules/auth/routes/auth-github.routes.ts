@@ -4,6 +4,7 @@ import { getGithubAuthUrl, handleGithubCallback, linkGithubAccount } from "../se
 import { authenticate } from "../middleware/auth.middleware.js"
 import { config } from "../../../config/index.js"
 import { sendError, sendSuccess } from "../../../utils/response.js"
+import { setAuthCookies } from "../../../utils/cookies.js"
 
 export const githubAuthRouter: Router = Router()
 
@@ -62,8 +63,9 @@ githubAuthRouter.get("/callback", async (req: Request, res: Response, next: Next
       return
     }
     const { tokens, isNewUser } = await handleGithubCallback(code)
+    setAuthCookies(res, tokens.accessToken, tokens.refreshToken)
     res.redirect(
-      `${config.FRONTEND_URL}/auth/callback?accessToken=${encodeURIComponent(tokens.accessToken)}&refreshToken=${encodeURIComponent(tokens.refreshToken)}&isNewUser=${isNewUser}`,
+      `${config.FRONTEND_URL}/auth/callback?isNewUser=${isNewUser}`,
     )
   } catch (err) {
     next(err)

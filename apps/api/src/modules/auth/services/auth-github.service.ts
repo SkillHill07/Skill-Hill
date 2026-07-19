@@ -185,7 +185,7 @@ export async function handleGithubCallback(
 
   return {
     user,
-    tokens: { accessToken: accessTokenJwt, refreshToken, expiresIn: 900 },
+    tokens: { accessToken: accessTokenJwt, refreshToken, expiresIn: config.ACCESS_TOKEN_EXPIRY_SECONDS },
     isNewUser,
   }
 }

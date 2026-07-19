@@ -1,6 +1,7 @@
 import express, { type Express } from "express"
 import helmet from "helmet"
 import cors from "cors"
+import cookieParser from "cookie-parser"
 import swaggerUi from "swagger-ui-express"
 import { healthRouter } from "./modules/health/health.routes.js"
 import { authRouter } from "./modules/auth/routes/auth.routes.js"
@@ -12,12 +13,19 @@ import { adminKycRouter } from "./modules/auth/routes/auth-admin-kyc.routes.js"
 import { adminAccountsRouter } from "./modules/auth/routes/auth-admin-accounts.routes.js"
 import { swaggerSpec } from "./config/swagger.js"
 import { errorHandler } from "./middlewares/error-handler.js"
+import { config } from "./config/index.js"
 
 export async function createApp(): Promise<Express> {
   const app = express()
 
   app.use(helmet())
-  app.use(cors())
+  app.use(
+    cors({
+      origin: config.FRONTEND_URL,
+      credentials: true,
+    }),
+  )
+  app.use(cookieParser())
   app.use(express.json())
 
   // Public routes

@@ -7,8 +7,48 @@ import { logger } from "../../../utils/logger.js"
 export type { }
 
 /**
+ * Extract a token from either the Authorization header (Bearer) or the
+ * accessToken cookie. Cookie-based auth is used for browser clients;
+ * header-based auth is used for mobile apps / programmatic access.
+ */
+function extractToken(req: Request): string | null {
+  // 1. Try Authorization header (Bearer token)
+  const authHeader = req.headers.authorization
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    return authHeader.split(" ")[1]
+  }
+
+  // 2. Try accessToken cookie (HttpOnly, set by the server)
+  if (req.cookies?.accessToken) {
+    return req.cookies.accessToken
+  }
+
+  return null
+}
+
+/**
+ * Extract the refresh token from either the request body or the
+ * refreshToken cookie.
+ */
+export function extractRefreshToken(req: Request): string | null {
+  // 1. Try request body
+  if (req.body?.refreshToken) {
+    return req.body.refreshToken
+  }
+
+  // 2. Try refreshToken cookie
+  if (req.cookies?.refreshToken) {
+    return req.cookies.refreshToken
+  }
+
+  return null
+}
+
+/**
  * Middleware: Requires a valid JWT access token.
  * Attaches decoded user payload to req.user.
+ * Checks the Authorization header first, then falls back to the
+ * accessToken cookie.
  */
 export function authenticate(
   req: Request,
@@ -16,14 +56,13 @@ export function authenticate(
   next: NextFunction,
 ): void {
   try {
-    const authHeader = req.headers.authorization
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    const token = extractToken(req)
+    if (!token) {
       logger.warn({ ip: req.ip, path: req.path }, "auth_failed: no_token")
       sendError(res, "Authentication required", 401, "No token provided")
       return
     }
 
-    const token = authHeader.split(" ")[1]
     const decoded = authService.verifyAccessToken(token)
     req.user = decoded
     next()
@@ -43,6 +82,7 @@ export function authenticate(
 
 /**
  * Middleware: Optionally attaches user if valid token exists, but doesn't block.
+ * Checks Authorization header first, then falls back to the accessToken cookie.
  */
 export function optionalAuth(
   req: Request,
@@ -50,9 +90,8 @@ export function optionalAuth(
   next: NextFunction,
 ): void {
   try {
-    const authHeader = req.headers.authorization
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      const token = authHeader.split(" ")[1]
+    const token = extractToken(req)
+    if (token) {
       const decoded = authService.verifyAccessToken(token)
       req.user = decoded
     }

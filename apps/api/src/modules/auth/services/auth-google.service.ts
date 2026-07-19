@@ -182,7 +182,7 @@ export async function handleGoogleCallback(
     tokens: {
       accessToken,
       refreshToken,
-      expiresIn: 900,
+      expiresIn: config.ACCESS_TOKEN_EXPIRY_SECONDS,
     },
     isNewUser,
   }

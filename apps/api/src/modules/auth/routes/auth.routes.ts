@@ -1,6 +1,6 @@
 import { Router } from "express"
 import { authService } from "../services/auth.service.js"
-import { authenticate } from "../middleware/auth.middleware.js"
+import { authenticate, extractRefreshToken } from "../middleware/auth.middleware.js"
 import { uploadAvatarMiddleware } from "../middleware/upload.middleware.js"
 import { uploadAvatar } from "../services/upload.service.js"
 import {
@@ -20,7 +20,8 @@ import {
   forgotPasswordLimiter,
   resetPasswordLimiter,
 } from "../../../middlewares/rate-limiter.js"
-import { sendSuccess } from "../../../utils/response.js"
+import { sendSuccess, sendError } from "../../../utils/response.js"
+import { setAuthCookies, clearAuthCookies } from "../../../utils/cookies.js"
 import type { Request, Response, NextFunction } from "express"
 
 export const authRouter: Router = Router()
@@ -94,6 +95,7 @@ authRouter.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { user, tokens } = await authService.registerUser(req.body)
+      setAuthCookies(res, tokens.accessToken, tokens.refreshToken)
       sendSuccess(res, { user, tokens }, "Registration successful", 201)
     } catch (err) {
       next(err)
@@ -157,6 +159,7 @@ authRouter.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { user, tokens } = await authService.loginUser(req.body)
+      setAuthCookies(res, tokens.accessToken, tokens.refreshToken)
       sendSuccess(res, { user, tokens }, "Login successful")
     } catch (err) {
       next(err)
@@ -207,9 +210,13 @@ authRouter.post(
   validateRequest(refreshSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { user, tokens } = await authService.refreshTokens(
-        req.body.refreshToken,
-      )
+      const refreshToken = extractRefreshToken(req)
+      if (!refreshToken) {
+        sendError(res, "Refresh token is required", 400, "Missing refresh token")
+        return
+      }
+      const { user, tokens } = await authService.refreshTokens(refreshToken)
+      setAuthCookies(res, tokens.accessToken, tokens.refreshToken)
       sendSuccess(res, { user, tokens }, "Tokens refreshed")
     } catch (err) {
       next(err)
@@ -248,7 +255,9 @@ authRouter.post(
   validateRequest(logoutSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await authService.logoutUser(req.user!.userId, req.body.refreshToken)
+      const refreshToken = extractRefreshToken(req) || ""
+      await authService.logoutUser(req.user!.userId, refreshToken)
+      clearAuthCookies(res)
       sendSuccess(res, null, "Logged out successfully")
     } catch (err) {
       next(err)
