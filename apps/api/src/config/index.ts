@@ -42,6 +42,7 @@ export const config = {
     "http://localhost:4000/auth/github/callback",
   ),
   FRONTEND_URL: env("FRONTEND_URL", "http://localhost:3000"),
+  CORS_ORIGINS: env("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001"),
   // Email — uses Gmail SMTP with app password
   EMAIL_USER: env("EMAIL_USER", ""),
   EMAIL_APP_PASSWORD: env("EMAIL_APP_PASSWORD", ""),

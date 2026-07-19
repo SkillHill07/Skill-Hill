@@ -4,6 +4,7 @@ import { redis } from "../../../config/redis.js"
 import { User, type IUser } from "../auth.schema.js"
 import type { LoginBody, RegisterBody, UpdateProfileBody } from "../auth.validators.js"
 import type { AuthTokens } from "@skillcontest/shared-types"
+import type { Role } from "@skillcontest/shared-types"
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -561,6 +562,42 @@ export async function setPassword(
   await cacheDel(cacheKeys.userProfile(userId))
 
   logger.info({ userId, hasExistingPassword: !!currentPassword }, "password_set_or_changed")
+}
+
+// --- Admin Login ---
+
+/**
+ * Login with admin/creator role check.
+ * Reuses the standard login flow then validates the user has an admin-level role.
+ */
+const ADMIN_ROLES: Role[] = ["admin", "creator"]
+
+export async function adminLoginUser(
+  input: LoginBody,
+): Promise<{ user: IUser; tokens: AuthTokens }> {
+  // Reuse standard login for credential validation + token generation
+  const result = await loginUser(input)
+
+  // Verify the user has an admin-level role
+  if (!ADMIN_ROLES.includes(result.user.role)) {
+    logger.warn({
+      userId: result.user._id.toString(),
+      email: result.user.email,
+      role: result.user.role,
+    }, "admin_login_failed: not_admin")
+    throw Object.assign(
+      new Error("Access denied. Admin or creator privileges required."),
+      { status: 403, code: "ADMIN_REQUIRED" },
+    )
+  }
+
+  logger.info({
+    userId: result.user._id.toString(),
+    email: result.user.email,
+    role: result.user.role,
+  }, "admin_login_success")
+
+  return result
 }
 
 export const authService = {

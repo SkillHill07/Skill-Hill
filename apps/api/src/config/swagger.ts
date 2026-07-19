@@ -5,21 +5,24 @@ const options: swaggerJsdoc.Options = {
     openapi: "3.0.0",
     info: {
       title: "Skills Arena API",
-      version: "0.3.0",
+      version: "0.4.0",
       description: `
 Skill-based coding contest platform. Users pay ₹20 to join a contest and win a prize.
 
-# Authentication Routes
+# Authentication
 
-All auth endpoints are under /auth. Tokens use JWT (15min access + 7 day refresh with rotation).
+Tokens are stored in **HttpOnly, Secure (prod), SameSite=Lax cookies** and also returned in the response body for backward compatibility.
+
+- **Access token**: 7 days (stored in \`accessToken\` cookie + response body)
+- **Refresh token**: 30 days (stored in \`refreshToken\` cookie + response body, rotated on use)
 
 ## Email/Password Auth
 | Method | Path | Auth | Rate Limit | Description |
 |--------|------|------|------------|-------------|
 | POST | /auth/register | No | 3/min | Register with email + password + Turnstile |
 | POST | /auth/login | No | 5/min | Login with email + password + Turnstile |
-| POST | /auth/refresh | No | 10/min | Refresh access token using refresh token |
-| POST | /auth/logout | Yes | — | Logout and revoke refresh token |
+| POST | /auth/refresh | No | 10/min | Refresh tokens (reads from cookie or body) |
+| POST | /auth/logout | Yes | — | Logout, clear cookies, revoke refresh token |
 | GET | /auth/me | Yes | — | Get current user profile |
 | PUT | /auth/me | Yes | — | Update profile (multipart, optional avatar upload) |
 | DELETE | /auth/me | Yes | — | Soft-delete own account |
@@ -30,7 +33,7 @@ All auth endpoints are under /auth. Tokens use JWT (15min access + 7 day refresh
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | GET | /auth/google | No | Redirect to Google consent screen |
-| GET | /auth/google/callback | No | OAuth callback — exchanges code for tokens |
+| GET | /auth/google/callback | No | OAuth callback — sets cookies, redirects to frontend |
 | GET | /auth/google/url | No | Get Google OAuth URL as JSON (for popup flows) |
 | POST | /auth/google/link | Yes | Link Google account to existing user |
 
@@ -38,7 +41,7 @@ All auth endpoints are under /auth. Tokens use JWT (15min access + 7 day refresh
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | GET | /auth/github | No | Redirect to GitHub consent screen |
-| GET | /auth/github/callback | No | OAuth callback — exchanges code for tokens |
+| GET | /auth/github/callback | No | OAuth callback — sets cookies, redirects to frontend |
 | GET | /auth/github/url | No | Get GitHub OAuth URL as JSON (for popup flows) |
 | POST | /auth/github/link | Yes | Link GitHub account to existing user |
 
@@ -54,6 +57,11 @@ All auth endpoints are under /auth. Tokens use JWT (15min access + 7 day refresh
 | PUT | /auth/kyc | Yes | Update PAN, bank account, IFSC, UPI (encrypted at rest AES-256-GCM) |
 | GET | /auth/kyc/status | Yes | Get KYC verification status (booleans only) |
 | GET | /auth/kyc/details | Yes | Get decrypted KYC values (self only) |
+
+## Admin — Auth
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | /admin/auth/login | No | Admin login — verifies admin/creator role, sets cookies |
 
 ## Password Reset
 | Method | Path | Auth | Rate Limit | Description |
@@ -82,7 +90,7 @@ All auth endpoints are under /auth. Tokens use JWT (15min access + 7 day refresh
 | GET | /health | No | Health check endpoint |
 
 # Key Security Features
-- **JWT**: 15min access tokens, 7 day refresh tokens with rotation
+- **JWT**: 7-day access tokens, 30-day refresh tokens with rotation (set as HttpOnly cookies)
 - **Redis**: Refresh token revocation, OTP storage, rate limiting cooldown
 - **Turnstile**: CAPTCHA verification on register, login, forgot-password
 - **Encryption**: KYC fields (PAN, bank account, IFSC, UPI) encrypted at rest using AES-256-GCM
@@ -111,6 +119,13 @@ All auth endpoints are under /auth. Tokens use JWT (15min access + 7 day refresh
           type: "http",
           scheme: "bearer",
           bearerFormat: "JWT",
+          description: "JWT access token. Provide via Authorization header or the accessToken cookie (HttpOnly, set automatically on login).",
+        },
+        cookieAuth: {
+          type: "apiKey",
+          in: "cookie",
+          name: "accessToken",
+          description: "HttpOnly cookie set by server on login. The refreshToken cookie is used for token refresh.",
         },
       },
       schemas: {
@@ -263,16 +278,16 @@ All auth endpoints are under /auth. Tokens use JWT (15min access + 7 day refresh
           properties: {
             accessToken: {
               type: "string",
-              description: "Short-lived JWT access token (15 minutes)",
+              description: "JWT access token (7 days). Also set as HttpOnly cookie.",
             },
             refreshToken: {
               type: "string",
-              description: "Long-lived JWT refresh token (7 days, rotated on use)",
+              description: "JWT refresh token (30 days, rotated on use). Also set as HttpOnly cookie.",
             },
             expiresIn: {
               type: "integer",
               description: "Access token expiry in seconds",
-              example: 900,
+              example: 604800,
             },
           },
         },
