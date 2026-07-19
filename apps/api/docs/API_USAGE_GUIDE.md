@@ -1,7 +1,7 @@
 # Skills Arena API Usage Guide
 
 > **For frontend, website, and admin panel developers.**
-> Last updated: July 2026 | API Version: 0.3.0
+> Last updated: July 2026 | API Version: 0.4.0
 
 ---
 
@@ -34,20 +34,21 @@ Production:  https://api.skillsarena.com
 
 ### Authentication
 
-All endpoints requiring auth use a **Bearer token** in the `Authorization` header:
+Tokens are stored in **HttpOnly, Secure (prod), SameSite=Lax cookies** and also returned in the response body for backward compatibility.
 
-```
-Authorization: Bearer <accessToken>
-```
+- **Access token** — 7 days, sent via `accessToken` cookie or `Authorization: Bearer <token>` header
+- **Refresh token** — 30 days, sent via `refreshToken` cookie or in request body
+
+The `authenticate` middleware checks the `Authorization` header first, then falls back to the `accessToken` cookie. The refresh endpoint reads from the request body first, then falls back to the `refreshToken` cookie.
 
 ### Token Flow
 
-| Token | Lifetime | Usage |
-|-------|----------|-------|
-| `accessToken` | 15 minutes | API calls (sent in Authorization header) |
-| `refreshToken` | 7 days | Get new tokens via `POST /auth/refresh` |
+| Token | Lifetime | Storage |
+|-------|----------|---------|
+| `accessToken` | 7 days | HttpOnly cookie + response body (`Authorization` header also accepted) |
+| `refreshToken` | 30 days | HttpOnly cookie + response body (rotated on use) |
 
-When the access token expires, call `/auth/refresh` with the refresh token to get a new pair. The old refresh token is invalidated (rotation).
+When the access token expires, call `/auth/refresh` with the refresh token (in body or cookie) to get a new pair.
 
 ### Standard Response Format
 
@@ -114,7 +115,7 @@ All auth-sensitive endpoints are rate-limited per IP using Redis-backed rate-lim
     "tokens": {
       "accessToken": "eyJ...",
       "refreshToken": "eyJ...",
-      "expiresIn": 900
+      "expiresIn": 604800
     }
   },
   "message": "Registration successful"
@@ -1036,12 +1037,11 @@ GITHUB_CALLBACK_URL=http://localhost:4000/auth/github/callback
 ### Email (Gmail App Password)
 
 ```
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
 EMAIL_USER=your@gmail.com
 EMAIL_APP_PASSWORD=<16-char-app-password>
-SMTP_FROM=SkillsArena <noreply@skillsarena.com>
 ```
+
+SMTP is hardcoded to Gmail (smtp.gmail.com:587). The EMAIL_USER address is used as the sender.
 
 ### Cloudflare Turnstile
 
@@ -1091,6 +1091,7 @@ RAZORPAY_WEBHOOK_SECRET=<your-webhook-secret>
   avatarUrl: string | null       // R2 avatar URL
   panVerified: boolean           // Default: false
   kycStatus: string              // 'pending' | 'verified' | 'rejected'
+  walletBalance: number              // Wallet balance in paise (1 INR = 100 paise)
   lastLoginAt: Date | null
   createdAt: Date
   updatedAt: Date
@@ -1111,5 +1112,6 @@ RAZORPAY_WEBHOOK_SECRET=<your-webhook-secret>
 6. **Email verification** — `/auth/otp/send`, `/auth/otp/verify`
 7. **Password reset** — `/auth/forgot-password`, `/auth/reset-password`
 8. **KYC** — `/auth/kyc` (PUT), `/auth/kyc/status` (GET), `/auth/kyc/details` (GET)
-9. **Admin KYC** — `/admin/kyc/pending`, `/admin/kyc/:userId`, `/admin/kyc/:userId/review`
-10. **Admin Accounts** — `/admin/accounts` (list), user details, status/role changes
+9. **Admin Login** — `/admin/auth/login` (same as login, but requires admin/creator role)
+10. **Admin KYC** — `/admin/kyc/pending`, `/admin/kyc/:userId`, `/admin/kyc/:userId/review`
+11. **Admin Accounts** — `/admin/accounts` (list), user details, status/role changes

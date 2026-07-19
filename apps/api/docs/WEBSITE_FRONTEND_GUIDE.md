@@ -1,7 +1,7 @@
 # Skills Arena API — Website Frontend Guide
 
 > **For website frontend developers implementing user-facing features.**
-> Last updated: July 2026 | API Version: 0.3.0
+> Last updated: July 2026 | API Version: 0.4.0
 
 ---
 
@@ -34,20 +34,21 @@ Production:  https://api.skillsarena.com
 
 ### Authentication
 
-All endpoints requiring auth use a **Bearer token** in the `Authorization` header:
+Tokens are stored in **HttpOnly, Secure (prod), SameSite=Lax cookies** and also returned in the response body for backward compatibility.
 
-```
-Authorization: Bearer <accessToken>
-```
+- **Access token** — 7 days, sent via `accessToken` cookie or `Authorization: Bearer <token>` header
+- **Refresh token** — 30 days, sent via `refreshToken` cookie or in request body
+
+The `authenticate` middleware checks the `Authorization` header first, then falls back to the `accessToken` cookie. The refresh endpoint reads from the request body first, then falls back to the `refreshToken` cookie.
 
 ### Token Flow
 
-| Token | Lifetime | Usage |
-|-------|----------|-------|
-| `accessToken` | 15 minutes | API calls (sent in Authorization header) |
-| `refreshToken` | 7 days | Get new tokens via `POST /auth/refresh` |
+| Token | Lifetime | Storage |
+|-------|----------|---------|
+| `accessToken` | 7 days | HttpOnly cookie + response body (`Authorization` header also accepted) |
+| `refreshToken` | 30 days | HttpOnly cookie + response body (rotated on use) |
 
-When the access token expires, call `/auth/refresh` with the refresh token to get a new pair. The old refresh token is invalidated (rotation).
+When the access token expires, call `/auth/refresh` with the refresh token (in body or cookie) to get a new pair.
 
 ### Standard Response Format
 
@@ -111,7 +112,7 @@ All auth-sensitive endpoints are rate-limited per IP using Redis-backed rate-lim
   "success": true,
   "data": {
     "user": { /* User object */ },
-    "tokens": { "accessToken": "eyJ...", "refreshToken": "eyJ...", "expiresIn": 900 }
+    "tokens": { "accessToken": "eyJ...", "refreshToken": "eyJ...", "expiresIn": 604800 }
   },
   "message": "Registration successful"
 }
@@ -357,8 +358,9 @@ fetch('/auth/me', {
 1. Call `GET /auth/google/url` to get the Google consent URL
 2. Open the URL in a popup window
 3. User consents on Google → Google redirects to `GET /auth/google/callback`
-4. Callback redirects to `{FRONTEND_URL}/auth/callback?accessToken=...&refreshToken=...&isNewUser=...`
-5. Parse tokens from URL query params, store them, redirect to dashboard
+4. Callback sets HttpOnly cookies on the API domain and redirects to `{FRONTEND_URL}/auth/callback?isNewUser=...`
+5. The browser automatically sends the cookies on subsequent API calls — no manual token storage needed
+6. Call `GET /auth/check` to verify the session
 
 ### Available Endpoints
 
@@ -366,7 +368,7 @@ fetch('/auth/me', {
 |--------|------|------|---------|
 | `GET` | `/auth/google` | No | Redirects to Google consent screen |
 | `GET` | `/auth/google/url` | No | Returns consent URL as JSON (for popups) |
-| `GET` | `/auth/google/callback` | No | Handles OAuth callback, redirects to frontend with tokens |
+| `GET` | `/auth/google/callback` | No | Handles OAuth callback, sets cookies, redirects to frontend |
 | `POST` | `/auth/google/link` | Yes | Links Google account to existing logged-in user |
 
 ### Account Linking
@@ -389,7 +391,7 @@ GitHub OAuth follows the exact same pattern as Google OAuth. The frontend integr
 |--------|------|------|---------|
 | `GET` | `/auth/github` | No | Redirects to GitHub consent screen |
 | `GET` | `/auth/github/url` | No | Returns consent URL as JSON |
-| `GET` | `/auth/github/callback` | No | Handles callback, redirects with tokens |
+| `GET` | `/auth/github/callback` | No | Handles callback, sets cookies, redirects to frontend |
 | `POST` | `/auth/github/link` | Yes | Links GitHub account to existing user |
 
 **Note:** GitHub may not expose the user's public email. The server fetches the primary email via GitHub's API automatically.
@@ -641,12 +643,11 @@ GITHUB_CALLBACK_URL=http://localhost:4000/auth/github/callback
 ### Email (Gmail App Password)
 
 ```
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
 EMAIL_USER=your@gmail.com
 EMAIL_APP_PASSWORD=<16-char-app-password>
-SMTP_FROM=SkillsArena <noreply@skillsarena.com>
 ```
+
+SMTP is hardcoded to Gmail (smtp.gmail.com:587). The EMAIL_USER address is used as the sender.
 
 ### Cloudflare Turnstile
 
@@ -687,6 +688,7 @@ R2_PUBLIC_URL=https://pub-xxxxx.r2.dev
   avatarUrl: string | null       // R2 avatar URL
   panVerified: boolean
   kycStatus: string              // 'pending' | 'verified' | 'rejected'
+  walletBalance: number          // Wallet balance in paise (1 INR = 100 paise)
   lastLoginAt: Date | null
   createdAt: Date
   updatedAt: Date

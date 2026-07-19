@@ -44,12 +44,21 @@ OpenAPI spec at [/api-docs.json](http://localhost:4000/api-docs.json) and Swagge
 
 The auth system is built **from scratch** using battle-tested libraries (jsonwebtoken, bcrypt, zod) and follows all rules in `AI_rules.md`.
 
+### Authentication
+
+Tokens are stored in **HttpOnly, Secure (prod), SameSite=Lax cookies** and also returned in the response body for backward compatibility.
+
+- **Access token** (`accessToken` cookie + response body): 7 days
+- **Refresh token** (`refreshToken` cookie + response body): 30 days (rotated on use)
+
+The `authenticate` middleware checks the `Authorization: Bearer <token>` header first, then falls back to the `accessToken` cookie. The `/auth/refresh` endpoint reads the refresh token from the request body or the `refreshToken` cookie.
+
 ### Authentication Flow
 
-1. **Register** (`POST /auth/register`) — Creates a user with firstName + lastName + email + password. Requires Turnstile CAPTCHA. Returns JWT tokens.
-2. **Login** (`POST /auth/login`) — Validates credentials + account status. Returns access token (15min) + refresh token (7 days).
-3. **Token Refresh** (`POST /auth/refresh`) — Rotates refresh token (old one revoked in Redis). Detects token reuse and revokes ALL tokens.
-4. **Logout** (`POST /auth/logout`) — Revokes the refresh token in Redis.
+1. **Register** (`POST /auth/register`) — Creates a user with firstName + lastName + email + password. Requires Turnstile CAPTCHA. Returns JWT tokens + sets HttpOnly cookies.
+2. **Login** (`POST /auth/login`) — Validates credentials + account status. Returns access token (7d) + refresh token (30d) + sets cookies.
+3. **Token Refresh** (`POST /auth/refresh`) — Rotates refresh token (old one revoked in Redis). Detects token reuse and revokes ALL tokens. Sets new cookies.
+4. **Logout** (`POST /auth/logout`) — Revokes the refresh token in Redis and clears cookies.
 
 ### Account Statuses
 
@@ -63,8 +72,9 @@ The auth system is built **from scratch** using battle-tested libraries (jsonweb
 ### Google OAuth
 
 - **`GET /auth/google`** — Redirects to Google consent screen
-- **`GET /auth/google/callback?code=...`** — Handles OAuth callback, creates/links user, redirects frontend with tokens
+- **`GET /auth/google/callback?code=...`** — Handles OAuth callback, creates/links user, sets cookies, redirects to frontend
 - **`GET /auth/google/url`** — Returns OAuth URL as JSON (for popup-based flows)
+- **`POST /auth/google/link`** — Links a Google account to the currently logged-in user
 
 Google users are created without a password. If a user already exists with the same email, their account is linked to Google (both email-password and Google sign-in work). Google-only accounts are blocked from using email-password login or password reset.
 
@@ -90,16 +100,20 @@ KYC fields reset to `pending` when any value changes. Validation: PAN (ABCDE1234
 
 Reset tokens are `crypto.randomBytes(32)` hex strings stored in Redis (15min TTL). Google-only accounts are excluded.
 
+### Admin Login
+
+- **`POST /admin/auth/login`** — Same as `/auth/login` but also verifies the user has `admin` or `creator` role. Sets cookies + returns tokens.
+
 ### Token Security
 
-- Access token: 15 minutes (JWT)
-- Refresh token: 7 days (JWT, rotated on each use)
+- Access token: 7 days (JWT, set as HttpOnly cookie)
+- Refresh token: 30 days (JWT, rotated on each use, set as HttpOnly cookie)
 - Redis-backed revocation list for logout + password change
 - Token reuse detection: using a revoked token revokes ALL sessions
 
 ### Rate Limiting
 
-All limiters are **per-IP** using `express-rate-limit` (in-memory, suitable for single-instance dev).
+All limiters are **per-IP** using `rate-limiter-flexible` with Redis (production-ready, works across multiple instances).
 
 | Endpoint | Limit | Window |
 |----------|-------|--------|
@@ -111,27 +125,35 @@ All limiters are **per-IP** using `express-rate-limit` (in-memory, suitable for 
 | OTP Send | 5 | 1 minute |
 | OTP Verify | 5 | 1 minute |
 
-> **Production note**: In-memory rate limiting resets on server restart and doesn't work across multiple instances. Before deploying to production with multiple API instances, switch to `rate-limiter-flexible` (already installed) with Redis store, or use the `rate-limit-redis` package as a store for express-rate-limit.
-
 ### Environment Variables
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `PORT` | No | 4000 | Server port |
-| `MONGODB_URI` | No | mongodb://localhost:27017/skillcontest | MongoDB connection |
+| `NODE_ENV` | No | development | Environment (development, production, test) |
+| `MONGODB_URI` | No* | mongodb://localhost:27017/skillcontest | MongoDB connection |
 | `REDIS_URL` | No | redis://localhost:6379 | Redis connection |
 | `JWT_SECRET` | No* | dev-only | JWT signing key |
 | `JWT_REFRESH_SECRET` | No* | dev-only | Refresh token signing key |
-| `ENCRYPTION_KEY` | No* | dev-only | AES-256 key derivation seed |
+| `ENCRYPTION_KEY` | No* | dev-only | AES-256-GCM encryption key |
+| `CORS_ORIGINS` | No | http://localhost:3000,http://localhost:3001 | Comma-separated allowed CORS origins |
+| `FRONTEND_URL` | No | http://localhost:3000 | Primary frontend URL for OAuth redirects |
 | `TURNSTILE_SECRET` | No* | dev-only | Cloudflare Turnstile secret |
-| `FRONTEND_URL` | No | http://localhost:3000 | Frontend URL for OAuth redirects |
 | `GOOGLE_CLIENT_ID` | For Google OAuth | — | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | For Google OAuth | — | Google OAuth client secret |
 | `GOOGLE_CALLBACK_URL` | No | http://localhost:4000/auth/google/callback | Google OAuth redirect URI |
-| `SMTP_HOST` | For email | — | SMTP server host |
-| `SMTP_PORT` | No | 587 | SMTP server port |
-| `SMTP_USER` | For email | — | SMTP username |
-| `SMTP_PASS` | For email | — | SMTP password |
-| `SMTP_FROM` | No | noreply@skillsarena.com | From address for emails |
+| `GITHUB_CLIENT_ID` | For GitHub OAuth | — | GitHub OAuth client ID |
+| `GITHUB_CLIENT_SECRET` | For GitHub OAuth | — | GitHub OAuth client secret |
+| `GITHUB_CALLBACK_URL` | No | http://localhost:4000/auth/github/callback | GitHub OAuth redirect URI |
+| `EMAIL_USER` | For email | — | Gmail address for sending emails |
+| `EMAIL_APP_PASSWORD` | For email | — | Gmail app password (16 chars) |
+| `R2_ACCOUNT_ID` | For avatars | — | Cloudflare R2 account ID |
+| `R2_ACCESS_KEY_ID` | For avatars | — | Cloudflare R2 access key |
+| `R2_SECRET_ACCESS_KEY` | For avatars | — | Cloudflare R2 secret key |
+| `R2_PUBLIC_BUCKET` | No | skillsarena-avatars | R2 bucket name |
+| `R2_PUBLIC_URL` | No | https://pub-xxxxx.r2.dev | R2 bucket public URL |
+| `RAZORPAY_KEY_ID` | For payments | — | Razorpay key ID |
+| `RAZORPAY_KEY_SECRET` | For payments | — | Razorpay key secret |
+| `RAZORPAY_WEBHOOK_SECRET` | For webhooks | — | Razorpay webhook secret |
 
 *\*Has a dev-only default. **Must be changed in production.***

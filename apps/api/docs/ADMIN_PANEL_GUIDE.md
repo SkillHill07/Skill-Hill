@@ -1,7 +1,7 @@
 # Skills Arena API — Admin Panel Guide
 
 > **For admin panel developers implementing admin-specific features.**
-> Last updated: July 2026 | API Version: 0.3.0
+> Last updated: July 2026 | API Version: 0.4.0
 
 ---
 
@@ -27,16 +27,22 @@ Production:  https://api.skillsarena.com
 
 ### Authentication
 
-All admin endpoints require authentication with a **Bearer token** plus the `admin` or `creator` role.
+Tokens are stored in **HttpOnly, Secure (prod), SameSite=Lax cookies** and also returned in the response body for backward compatibility.
 
-```
-Authorization: Bearer <accessToken>
-```
+- **Access token** — 7 days, sent via `accessToken` cookie or `Authorization: Bearer <token>` header
+- **Refresh token** — 30 days, sent via `refreshToken` cookie or in request body
+
+The `authenticate` middleware checks the `Authorization` header first, then falls back to the `accessToken` cookie.
+
+### Admin Login
+
+Admin users login via **`POST /admin/auth/login`** — same as regular login but also verifies the user has `admin` or `creator` role. Sets HttpOnly cookies and returns tokens.
 
 ### Role Requirements
 
 | Endpoint Group | Required Role |
 |----------------|---------------|
+| Admin — Login | `admin` or `creator` (checked after credential validation) |
 | Admin — KYC Review | `admin` or `creator` |
 | Admin — Account Listing & Details | `admin` or `creator` |
 | Admin — Status Changes | `admin` only |
@@ -44,10 +50,10 @@ Authorization: Bearer <accessToken>
 
 ### Token Flow
 
-| Token | Lifetime | Usage |
-|-------|----------|-------|
-| `accessToken` | 15 minutes | API calls |
-| `refreshToken` | 7 days | Get new tokens via `POST /auth/refresh` |
+| Token | Lifetime | Storage |
+|-------|----------|---------|
+| `accessToken` | 7 days | HttpOnly cookie + response body |
+| `refreshToken` | 30 days | HttpOnly cookie + response body (rotated on use) |
 
 ### Standard Response Format
 
@@ -367,6 +373,7 @@ From the user details page, you can navigate to `GET /admin/kyc/:userId` to view
   avatarUrl: string | null       // R2 avatar URL
   panVerified: boolean
   kycStatus: string              // 'pending' | 'verified' | 'rejected'
+  walletBalance: number          // Wallet balance in paise (1 INR = 100 paise)
   lastLoginAt: Date | null
   createdAt: Date
   updatedAt: Date
