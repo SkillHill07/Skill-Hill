@@ -29,11 +29,9 @@ Set up CI/CD pipeline, production deployment configuration, monitoring, and aler
 - **File**: `docker-compose.yml`
 - **Services**:
   - `mongo` — MongoDB instance
-  - `redis` — Redis instance
-  - `api` — Express API server
+  - `upstash-redis` — Upstash Redis (managed, REST API; creds via env)
+  - `api` — Express API server (judge + contest workers run in-process)
   - `web` — Next.js app
-  - `judge-worker` — BullMQ worker for code judging
-  - `bull-board` — BullMQ dashboard for job monitoring
 - **Skill**: backend-development
 
 ### 3. Production Docker Setup

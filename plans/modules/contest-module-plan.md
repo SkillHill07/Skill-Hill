@@ -72,7 +72,7 @@ draft ──publish──→ active ──freeze──→ frozen ──settle─
 
 - **draft**: Admin creating/editing contest
 - **active**: Contest is visible and accepting participants
-- **frozen**: Submissions closed (triggered by BullMQ at endTime)
+- **frozen**: Submissions closed (triggered by Upstash at endTime)
 - **settled**: Prizes distributed
 - **cancelled**: Contest cancelled, refunds issued
 
@@ -86,7 +86,7 @@ draft ──publish──→ active ──freeze──→ frozen ──settle─
 | PATCH | /api/contests/:id | Admin | Update draft |
 | POST | /api/contests/:id/publish | Admin | Publish contest |
 | POST | /api/contests/:id/cancel | Admin | Cancel contest (refunds via wallet) |
-| POST | /api/contests/:id/freeze | System | Freeze contest (BullMQ) |
+| POST | /api/contests/:id/freeze | System | Freeze contest (Upstash) |
 | POST | /api/contests/:id/settle | Admin | Settle contest (triggers prize distribution) |
 | POST | /api/contests/:id/join | User | Join contest (checks wallet balance, deducts entry fee) |
 | POST | /api/contests/:id/start | User | Start contest for user (one-time) |
@@ -108,7 +108,7 @@ POST /api/contests/:id/join
 - Switching to `paid` via PATCH requires a positive `entryFee` in the same request
 - The wallet module (Phase 3) skips the fee deduction for `free` contests
 
-## BullMQ Jobs
+## Upstash Jobs
 - `freeze-contest` — Delayed job at contest endTime
 - `settle-contest` — Runs after freeze, triggers prize distribution
 

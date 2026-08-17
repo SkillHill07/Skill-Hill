@@ -64,7 +64,7 @@ User submits code
     → Validate problem exists, user is in contest, contest is active
     → Rate limit check
     → Create submission record (status: pending)
-    → Enqueue judge job in BullMQ
+    → Enqueue judge job in Upstash
     → Return submission ID (202 Accepted)
 
 Worker picks up job

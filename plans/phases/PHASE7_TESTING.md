@@ -28,7 +28,7 @@ Build comprehensive test coverage across all modules, including unit tests, inte
   - **Payment Flow**: Create order → simulate Razorpay webhook → verify participation
   - **Submission Flow**: Submit code → judge runs → result stored → leaderboard updated
 - **Skill**: backend-development, mongodb-query-optimizer
-- **Setup**: Use MongoDB memory server, Redis mock, in-memory BullMQ
+- **Setup**: Use MongoDB memory server, Redis mock, in-memory Upstash
 
 ### 3. E2E Tests
 - **Files**: `apps/web/__tests__/e2e/`

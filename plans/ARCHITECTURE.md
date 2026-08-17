@@ -54,14 +54,14 @@ Each module owns its domain logic, data, and routes. Modules call each other's s
 ### Submission Module
 - Owns: submission lifecycle, result storage
 - References: userId, contestId, problemId (all by ID, no ownership)
-- Delegates to: judge module (via BullMQ) for code execution
+- Delegates to: judge module (via Upstash) for code execution
 - Calls: leaderboard service to update scores
 
 ### Judge Module
 - Owns: code execution, Docker sandbox, test case running, score calculation
 - Reads from: problem module (test cases), submission module (code)
 - Writes to: submission module (results)
-- Runs as: BullMQ worker in separate process — never in API request thread
+- Runs as: Upstash worker in separate process — never in API request thread
 
 ### Payment Module
 - Owns: Razorpay order creation, webhook verification, refunds
@@ -121,7 +121,7 @@ User writes code → clicks Submit
     1. Validates user is in contest, contest is active
     2. Rate limit check (Redis)
     3. Creates submission record (status: pending)
-    4. Enqueues BullMQ job with { submissionId, problemId }
+    4. Enqueues Upstash job with { submissionId, problemId }
     5. Returns 202
 
 Judge Worker (separate process):
@@ -142,11 +142,11 @@ Judge Worker (separate process):
 ## Data Flow: Contest Settlement
 
 ```
-Contest endTime reached → BullMQ delayed job fires
+Contest endTime reached → Upstash delayed job fires
   → freezes contest (no more submissions)
   → Snapshots leaderboard Redis → MongoDB
 
-Admin triggers settle (or BullMQ auto-settle)
+Admin triggers settle (or Upstash auto-settle)
   → Prize module reads frozen leaderboard
   → Calculates prize distribution
   → For each winner:
@@ -202,7 +202,7 @@ Contest ─── depends on ──── Wallet (balance check)      │
     │                              │                    │
 Submission ─── depends on ──── Contest, Problem, Auth   │
     │                              │                    │
-    ├── sends to ──── Judge (BullMQ)                    │
+    ├── sends to ──── Judge (Upstash)                    │
     │                              │                    │
 Judge ──── reads ──── Problem (test cases)              │
     │                              │                    │

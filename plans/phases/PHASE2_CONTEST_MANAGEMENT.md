@@ -25,7 +25,7 @@ Build the core contest management APIs — create, schedule, join, run, and sett
   - `POST /api/contests/:id/publish` — transition draft → active
   - `POST /api/contests/:id/join` — user joins (requires payment first)
   - `POST /api/contests/:id/start` — start contest for user
-  - `POST /api/contests/:id/freeze` — transition active → frozen (BullMQ job at endTime)
+  - `POST /api/contests/:id/freeze` — transition active → frozen (Upstash job at endTime)
   - `POST /api/contests/:id/settle` — transition frozen → settled (triggers prize distribution)
   - `POST /api/contests/:id/cancel` — cancel contest, refund all participants
 - **Skill**: express-typescript, backend-patterns, backend-development
@@ -33,7 +33,7 @@ Build the core contest management APIs — create, schedule, join, run, and sett
   - Route handlers call service, zero business logic in handlers
   - All input validated with Zod at route boundary
   - State machine transitions enforced in service layer
-  - BullMQ delayed job at `endTime` to auto-freeze
+  - Upstash delayed job at `endTime` to auto-freeze
   - Server-authoritative timing only
 
 ### 3. Problem/Question Management
@@ -59,7 +59,7 @@ Build the core contest management APIs — create, schedule, join, run, and sett
   - `POST /api/contests/:id/start` — marks participation as started (one-time)
 - **Skill**: backend-development, backend-patterns
 
-### 5. BullMQ Jobs
+### 5. Upstash Jobs
 - **File**: `apps/api/src/jobs/contest.jobs.ts`
 - **Jobs**:
   - `freeze-contest` — delayed job at contest `endTime`
@@ -85,7 +85,7 @@ Build the core contest management APIs — create, schedule, join, run, and sett
 - Contest CRUD with full lifecycle
 - Problem management with hidden test case security
 - Participation tracking
-- Auto-freeze via BullMQ
+- Auto-freeze via Upstash
 - Proper state machine transitions
 
 ## Dependencies
@@ -94,4 +94,4 @@ Build the core contest management APIs — create, schedule, join, run, and sett
 ## Verification
 - Contest lifecycle E2E test (create → publish → join → start → freeze → settle)
 - Hidden test cases never leak in API response
-- BullMQ freeze job fires at correct time
+- Upstash freeze job fires at correct time

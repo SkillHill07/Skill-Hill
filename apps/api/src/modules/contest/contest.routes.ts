@@ -314,7 +314,7 @@ contestRouter.post(
  * /contests/{id}/freeze:
  *   post:
  *     tags: [Contests]
- *     summary: Freeze a contest (active → frozen) — admin/creator or BullMQ worker
+ *     summary: Freeze a contest (active → frozen) — admin/creator or Upstash job worker
  *     security:
  *       - bearerAuth: []
  *     parameters:

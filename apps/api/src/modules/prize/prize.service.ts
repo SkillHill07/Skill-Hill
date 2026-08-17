@@ -19,7 +19,7 @@ import type { Types } from "mongoose"
  * Idempotency: the (contestId, userId) unique index means re-running
  * distribution never duplicates a winner, and already-credited winners are
  * skipped while stuck pending/failed winners are retried. `distribute` is
- * safe to call from the settle flow, the BullMQ worker, or the admin
+ * safe to call from the settle flow, the Upstash job worker, or the admin
  * redistribute endpoint.
  */
 

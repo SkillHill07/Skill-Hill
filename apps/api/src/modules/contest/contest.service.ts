@@ -214,7 +214,7 @@ async function updateContest(id: string, input: UpdateContestBody): Promise<ICon
 
 /**
  * Publish: draft → active.
- * Schedules the BullMQ delayed freeze job at the contest endTime
+ * Schedules the Upstash delayed freeze job at the contest endTime
  * (server-authoritative timing — never client-reported).
  */
 async function publishContest(id: string): Promise<IContest> {
@@ -282,7 +282,7 @@ async function cancelContest(id: string, reason?: string): Promise<IContest> {
 }
 
 /**
- * Freeze: active → frozen. Called by the BullMQ worker at endTime
+ * Freeze: active → frozen. Called by the Upstash job worker at endTime
  * (server-authoritative) or by an admin.
  */
 async function freezeContest(id: string): Promise<IContest> {

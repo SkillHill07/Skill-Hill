@@ -16,7 +16,7 @@ Execute user-submitted code against test cases in isolated Docker containers and
 
 ```
 apps/api/src/modules/judge/
-├── judge.worker.ts           # BullMQ worker (separate process)
+├── judge.worker.ts           # Upstash worker (separate process)
 ├── judge.service.ts          # Core judging logic
 ├── docker/
 │   ├── sandbox.ts            # Docker container manager
@@ -87,7 +87,7 @@ judge.worker.ts                        docker/sandbox.ts
 - Partial credit: points × (passed / total)
 - Time bonus: none in v1 (ponytail: consider for v2)
 
-## BullMQ Queue
+## Upstash Queue
 - Queue name: `judge`
 - Concurrency: 5 (limited by Docker host capacity)
 - Retry: 2 attempts on infrastructure failure (not on wrong answer)
@@ -129,5 +129,5 @@ judge.worker.ts                        docker/sandbox.ts
 ## Skills
 - backend-development — core infrastructure
 - security-review — sandbox hardening
-- express-typescript — BullMQ integration
+- express-typescript — Upstash integration
 - mongodb-query-optimizer — submission query performance

@@ -5,14 +5,14 @@
 Implemented in `apps/api/src/modules/prize/` (prize.model.ts, prize.service.ts, prize.validation.ts, prize.routes.ts, prize.admin.routes.ts, index.ts). **22 new tests** (14 service incl. distribution math, tie splitting, idempotency, credit-failure handling; 4 public/user routes; 4 admin routes). Typecheck + lint clean.
 
 **Live now:**
-- Distribution triggers automatically inside `contestService.settleContest` (covers both the admin settle route AND the BullMQ worker auto-settle). Pool = `entryFee × ALL paid participants` (everyone funded the pot — non-submitters forfeit the win, not their money); winners = the submitted + scored subset (score > 0). Platform keeps `PLATFORM_FEE_RATE` (env, default 0.1), net pool split per the share table (40/25/15/5/5/2×5). Winners' wallets are credited via `walletService.credit` (idempotent on `(prize, contestId)`).
+- Distribution triggers automatically inside `contestService.settleContest` (covers both the admin settle route AND the Upstash worker auto-settle). Pool = `entryFee × ALL paid participants` (everyone funded the pot — non-submitters forfeit the win, not their money); winners = the submitted + scored subset (score > 0). Platform keeps `PLATFORM_FEE_RATE` (env, default 0.1), net pool split per the share table (40/25/15/5/5/2×5). Winners' wallets are credited via `walletService.credit` (idempotent on `(prize, contestId)`).
 - `GET /contests/:id/prizes` (public) — share structure + indicative amounts; winners with names once settled. Draft/cancelled hidden from non-staff (matches leaderboard/contest).
 - `GET /prizes` (user) — own prize history, contest title/slug populated.
 - `POST /admin/contests/:id/prizes/redistribute` (admin) — idempotent re-run: retries stuck pending/failed credits, skips credited ones. Used to recover from a failed distribution at settle time.
 
 **Deferred (ponytail):**
 - Per-contest custom prize tables (the share table is a fixed module constant; a contest `prizeTable` field + validation would be needed).
-- BullMQ prize job with exponential backoff — distribution runs synchronously in the settle call; per-winner credit failures are logged and retried via the admin endpoint.
+- Upstash prize job with exponential backoff — distribution runs synchronously in the settle call; per-winner credit failures are logged and retried via the admin endpoint.
 - `POST /prizes/:id/withdraw` — not built: prizes credit the wallet, and payouts to UPI are the wallet withdrawal flow (KYC-gated, already wired to RazorpayX).
 
 **Documented deviations:**
@@ -55,7 +55,7 @@ apps/api/src/modules/prize/
 
 ### Automatic (after settle)
 ```
-1. Admin triggers settle (or BullMQ job)
+1. Admin triggers settle (or Upstash job)
 2. Service:
    a. Reads frozen leaderboard from MongoDB
    b. Calculates prize distribution

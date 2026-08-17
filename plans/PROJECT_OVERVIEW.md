@@ -86,7 +86,7 @@ apps/api/
   │   │   ├── banner/      # Hero/announcement banners (+ R2 image upload)
 │   │   ├── faq/         # FAQ content (category filter)
 │   │   ├── prize/       # Prize distribution (wallet credits on settle) + prize history
-│   │   ├── sockets/     # Realtime submission status (socket.io + Redis adapter)
+│   │   ├── sockets/     # Realtime submission status (socket.io, single-instance)
   │   │   └── webhook/     # Payment webhooks
   │   ├── utils/          # Shared utilities
   │   └── jobs/           # Background jobs

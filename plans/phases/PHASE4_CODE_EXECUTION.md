@@ -7,10 +7,10 @@ Build the secure, isolated code execution system — the core leetcode-style jud
 
 ### 1. Judge Worker Architecture
 - **File**: `apps/api/src/modules/judge/judge.worker.ts`
-- **Description**: BullMQ worker that processes submission jobs from a queue
+- **Description**: Upstash worker that processes submission jobs from a queue
 - **Architecture**:
   ```
-  User submits code → API creates submission record → BullMQ queue → 
+  User submits code → API creates submission record → Upstash queue → 
   Judge worker picks up → Spawn Docker container → Run code against test cases →
   Collect results → Update submission record → Emit leaderboard update
   ```
@@ -87,7 +87,7 @@ Build the secure, isolated code execution system — the core leetcode-style jud
 - **Files**: `apps/api/src/sockets/{socket-server,emitter,submission.socket,index}.ts`
 - **Description**: Push submission status updates to client via WebSocket
 - **Events**:
-  - `submission:queued` — when submission enters BullMQ queue (submission.service)
+  - `submission:queued` — when submission enters Upstash queue (submission.service)
   - `submission:running` — when worker starts processing (judge.service)
   - `submission:completed` — when judging finishes (judge.service `persistResult` — single choke point)
 - **Auth**: JWT verified at handshake (`auth.token`, Bearer header, or `accessToken` cookie);
@@ -98,18 +98,14 @@ Build the secure, isolated code execution system — the core leetcode-style jud
   cross-user isolation) + token-extraction unit tests (auth.token / Bearer / cookie) —
   real server + `socket.io-client`
 - **Skill**: backend-development
-- **Multi-instance (wired, opt-in)**: `@socket.io/redis-adapter` is wired in
-  `initSocketServer` behind `SOCKET_REDIS_ADAPTER=true`. Enabling it makes ALL
-  broadcast delivery go through Redis pub/sub (adapter `publish()` is fire-and-
-  forget with no catch — the pub/sub clients inherit the app's `enableOfflineQueue`
-  so Redis hiccups queue instead of crashing). Two-process test:
-  `src/sockets/multi-instance.test.ts` spawns 2 real processes sharing Redis and
-  asserts cross-process delivery (skips when Redis is unreachable; run with Redis
-  up to execute). Keep Redis healthy in multi-instance mode.
+- **Multi-instance (removed)**: `@socket.io/redis-adapter` was dropped — Upstash
+  Redis is REST-only (no pub/sub), so realtime relay across instances is not
+  wired. The API runs single-instance; scale horizontally only for stateless
+  HTTP, not sockets.
 - **Deferred (ponytail) — worker extraction**: the socket emits live in `judge.service`,
   which runs in-process today. When the judge worker is extracted to a standalone process,
   its `emitToUser` calls would silently no-op (no socket.io server there). Before that
-  extraction, the worker must relay status via Redis pub/sub (or BullMQ events) and the
+  extraction, the worker must relay status via Redis pub/sub (or Upstash polling) and the
   API process must forward to socket.io — otherwise realtime delivery breaks silently.
 
 ## Deliverables
