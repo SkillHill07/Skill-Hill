@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { ProblemsExplorer } from "@/components/problems-explorer"
 
 export const metadata: Metadata = {
-  title: "Practice Library — SkillsArena",
+  title: "Practice Library — SkillHill",
   description:
     "Browse the free practice library: problems from past and live contests, filter by difficulty, type, and language.",
 }

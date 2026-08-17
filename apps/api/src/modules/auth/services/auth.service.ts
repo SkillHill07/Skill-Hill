@@ -355,7 +355,7 @@ export async function forgotPassword(
 
   await sendEmail({
     to: email,
-    subject: "Reset Your SkillsArena Password",
+    subject: "Reset Your SkillHill Password",
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
         <h2 style="color: #1a1a2e;">Reset Your Password</h2>
@@ -383,11 +383,11 @@ export async function forgotPassword(
         </p>
         <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
         <p style="color: #999; font-size: 12px;">
-          SkillsArena — Skill-based coding contest platform
+          SkillHill — Skill-based coding contest platform
         </p>
       </div>
     `,
-    text: `Reset your SkillsArena password\n\nWe received a request to reset your password. Visit this link to set a new one:\n\n${resetLink}\n\nThis link expires in 15 minutes.\n\nIf you didn't request this, please ignore this email.`,
+    text: `Reset your SkillHill password\n\nWe received a request to reset your password. Visit this link to set a new one:\n\n${resetLink}\n\nThis link expires in 15 minutes.\n\nIf you didn't request this, please ignore this email.`,
   })
 }
 

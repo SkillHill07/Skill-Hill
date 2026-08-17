@@ -4,7 +4,7 @@ const options: swaggerJsdoc.Options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "Skills Arena API",
+      title: "SkillHill API",
       version: "0.7.0",
       description: `
 Skill-based coding contest platform. Users pay ₹20 to join a contest and win a prize.

@@ -90,7 +90,7 @@ export const initiatePayout: PayoutFn = async ({
     mode: "UPI",
     purpose: "payout",
     reference_id: transactionId, // wallet transaction id — idempotency at Razorpay
-    narration: "Skills Arena withdrawal",
+    narration: "SkillHill withdrawal",
   })
 
   logger.info(

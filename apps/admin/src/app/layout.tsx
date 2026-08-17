@@ -4,8 +4,8 @@ import { Shell } from "@/components/shell"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "SkillsArena Admin",
-  description: "SkillsArena admin panel",
+  title: "SkillHill Admin",
+  description: "SkillHill admin panel",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

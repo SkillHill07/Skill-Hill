@@ -7,7 +7,7 @@ import { config } from "../config/index.js"
  * - In **development**: uses pino-pretty with colorized output and `debug` level
  * - In **production**: outputs standard JSON lines at `info` level
  *
- * Every log line automatically includes `service: "skillsarena-api"` for
+ * Every log line automatically includes `service: "skillshill-api"` for
  * easy filtering in log aggregation tools (Datadog, Grafana Loki, etc.).
  */
 export const logger = pino({
@@ -23,7 +23,7 @@ export const logger = pino({
     },
   }),
   base: {
-    service: "skillsarena-api",
+    service: "skillshill-api",
     env: config.NODE_ENV,
   },
   redact: {

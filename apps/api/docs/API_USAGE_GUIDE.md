@@ -1,4 +1,4 @@
-# Skills Arena API Usage Guide
+# SkillHill API Usage Guide
 
 > **For frontend, website, and admin panel developers.**
 > Last updated: July 2026 | API Version: 0.4.0
@@ -29,7 +29,7 @@
 
 ```
 Development: http://localhost:4000
-Production:  https://api.skillsarena.com
+Production:  https://api.skillshill.com
 ```
 
 ### Authentication
@@ -1055,7 +1055,7 @@ TURNSTILE_SECRET=0x4AAAAAAA...
 R2_ACCOUNT_ID=<your-account-id>
 R2_ACCESS_KEY_ID=<your-access-key>
 R2_SECRET_ACCESS_KEY=<your-secret-key>
-R2_PUBLIC_BUCKET=skillsarena-avatars
+R2_PUBLIC_BUCKET=skillshill-avatars
 R2_PUBLIC_URL=https://pub-xxxxx.r2.dev
 ```
 

@@ -1,4 +1,4 @@
-# SkillsArena
+# SkillHill
 
 Skill-based coding contest platform. Users pay ₹20 to join a contest and win a prize.
 

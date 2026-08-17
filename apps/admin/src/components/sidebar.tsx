@@ -54,7 +54,7 @@ export function Sidebar() {
     <aside className="flex h-screen w-60 shrink-0 flex-col border-r border-border bg-card">
       <div className="flex h-16 items-center gap-2 border-b border-border px-5">
         <Trophy className="h-5 w-5 text-indigo-500" />
-        <span className="font-bold tracking-tight">SkillsArena Admin</span>
+        <span className="font-bold tracking-tight">SkillHill Admin</span>
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">

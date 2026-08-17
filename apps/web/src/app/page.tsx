@@ -308,7 +308,7 @@ export default function HomePage() {
       {whyItems && whyItems.length > 0 && (
         <section className="mx-auto max-w-6xl px-4 py-14">
           <SectionHeading
-            eyebrow="Why SkillsArena"
+            eyebrow="Why SkillHill"
             title="Built for serious solvers"
             description="Everything you need to compete at your best — no distractions."
           />

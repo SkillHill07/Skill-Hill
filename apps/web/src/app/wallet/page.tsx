@@ -61,7 +61,7 @@ async function openRazorpayCheckout(order: Order): Promise<void> {
     key: order.keyId,
     amount: order.amount,
     currency: order.currency,
-    name: "SkillsArena",
+    name: "SkillHill",
     description: "Wallet deposit",
     order_id: order.orderId,
     prefill: { contact: "", email: "" },

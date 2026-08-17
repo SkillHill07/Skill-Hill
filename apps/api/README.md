@@ -1,6 +1,6 @@
 # @skillcontest/api
 
-Express + TypeScript REST API — the backend for Skills Arena.
+Express + TypeScript REST API — the backend for SkillHill.
 
 All routes return a standard envelope:
 
@@ -150,7 +150,7 @@ All limiters are **per-IP** using `rate-limiter-flexible` with Redis (production
 | `R2_ACCOUNT_ID` | For avatars | — | Cloudflare R2 account ID |
 | `R2_ACCESS_KEY_ID` | For avatars | — | Cloudflare R2 access key |
 | `R2_SECRET_ACCESS_KEY` | For avatars | — | Cloudflare R2 secret key |
-| `R2_PUBLIC_BUCKET` | No | skillsarena-avatars | R2 bucket name |
+| `R2_PUBLIC_BUCKET` | No | skillshill-avatars | R2 bucket name |
 | `R2_PUBLIC_URL` | No | https://pub-xxxxx.r2.dev | R2 bucket public URL |
 | `RAZORPAY_KEY_ID` | For payments | — | Razorpay key ID |
 | `RAZORPAY_KEY_SECRET` | For payments | — | Razorpay key secret |

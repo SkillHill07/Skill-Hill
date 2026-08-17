@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { ProblemViewer } from "@/components/problem-viewer"
 
 export const metadata: Metadata = {
-  title: "Problem — SkillsArena",
+  title: "Problem — SkillHill",
   description: "Practice a contest problem: read the statement, check examples, and study the template.",
 }
 

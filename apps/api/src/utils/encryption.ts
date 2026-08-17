@@ -8,7 +8,7 @@ function getEncryptionKey(): Buffer {
     throw new Error("ENCRYPTION_KEY environment variable is required")
   }
   // Derive a 32-byte key from the ENCRYPTION_KEY using scrypt
-  return scryptSync(key, "skillsarena-kyc-salt", 32)
+  return scryptSync(key, "skillshill-kyc-salt", 32)
 }
 
 const KEY = getEncryptionKey()

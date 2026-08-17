@@ -1,9 +1,9 @@
 ---
-name: skillsArena
+name: skillHill
 description: A brief description of what this skill does
 ---
 
-# skillsArena
+# skillHill
 
 Instructions for the agent to follow when this skill is activated.
 

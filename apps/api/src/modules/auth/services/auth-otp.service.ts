@@ -93,7 +93,7 @@ export async function sendEmailOtp(
   // Send email
   await sendEmail({
     to: user.email,
-    subject: "Your SkillsArena Email Verification Code",
+    subject: "Your SkillHill Email Verification Code",
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
         <h2 style="color: #1a1a2e;">Verify Your Email</h2>
@@ -116,11 +116,11 @@ export async function sendEmailOtp(
         </p>
         <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
         <p style="color: #999; font-size: 12px;">
-          SkillsArena — Skill-based coding contest platform
+          SkillHill — Skill-based coding contest platform
         </p>
       </div>
     `,
-    text: `Your SkillsArena verification code is: ${otp}\n\nThis code expires in 10 minutes.\n\nIf you didn't request this, please ignore this email.`,
+    text: `Your SkillHill verification code is: ${otp}\n\nThis code expires in 10 minutes.\n\nIf you didn't request this, please ignore this email.`,
   })
 
   logger.info({ userId, email: user.email }, "otp_sent")

@@ -5,7 +5,7 @@ import { Footer } from "@/components/footer"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "SkillsArena",
+  title: "SkillHill",
   description: "Skill-based coding contests — pay ₹20, compete, win prizes.",
 }
 

@@ -54,7 +54,7 @@ interface SendEmailOptions {
 
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
   const transport = getTransporter()
-  const from = config.EMAIL_USER || "noreply@skillsarena.com"
+  const from = config.EMAIL_USER || "noreply@skillshill.com"
 
   await transport.sendMail({
     from,

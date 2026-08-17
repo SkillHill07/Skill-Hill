@@ -55,7 +55,7 @@ const logoDoc = {
   _id: "64b7f9c5e5b9c1a2b3c4d5e0",
   key: "primary",
   logoUrl: LOGO_URL,
-  altText: "Skills Arena",
+  altText: "SkillHill",
   tagline: null,
 }
 
@@ -82,11 +82,11 @@ describe("PUT /site/logo", () => {
 
     const res = await request(app)
       .put("/site/logo")
-      .send({ altText: "Skills Arena", tagline: "Win big" })
+      .send({ altText: "SkillHill", tagline: "Win big" })
 
     expect(res.status).toBe(200)
     expect(mocks.updateLogo).toHaveBeenCalledWith({
-      altText: "Skills Arena",
+      altText: "SkillHill",
       tagline: "Win big",
     })
     expect(res.body.data.tagline).toBe("Win big")

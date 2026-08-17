@@ -1,4 +1,4 @@
-# Skills Arena API — Admin Panel Guide
+# SkillHill API — Admin Panel Guide
 
 > **For admin panel developers implementing admin-specific features.**
 > Last updated: July 2026 | API Version: 0.4.0
@@ -22,7 +22,7 @@
 
 ```
 Development: http://localhost:4000
-Production:  https://api.skillsarena.com
+Production:  https://api.skillshill.com
 ```
 
 ### Authentication

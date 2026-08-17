@@ -33,7 +33,7 @@ export const adminAuthRouter: Router = Router()
  *               email:
  *                 type: string
  *                 format: email
- *                 example: admin@skillsarena.com
+ *                 example: admin@skillshill.com
  *               password:
  *                 type: string
  *                 format: password

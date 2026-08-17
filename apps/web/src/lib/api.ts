@@ -1,5 +1,5 @@
 /**
- * Thin API client for the SkillsArena backend.
+ * Thin API client for the SkillHill backend.
  *
  * The API returns `{ success, data, message?, error?, code? }` (see
  * utils/response.ts in the API). Auth is cookie-based (HttpOnly accessToken

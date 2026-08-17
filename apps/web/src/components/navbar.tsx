@@ -55,7 +55,7 @@ export function Navbar() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
           <Trophy className="h-5 w-5 text-indigo-500" />
-          <span className="text-lg">SkillsArena</span>
+          <span className="text-lg">SkillHill</span>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
