@@ -73,7 +73,7 @@ When the access token expires, call `/auth/refresh` with the refresh token (in b
 
 ### Rate Limiting
 
-All auth-sensitive endpoints are rate-limited per IP using Redis-backed rate-limiter-flexible:
+All auth-sensitive endpoints are rate-limited per IP using fixed-window counters on Upstash Redis:
 
 | Endpoint | Limit |
 |----------|-------|
@@ -618,7 +618,8 @@ At least one field required.
 ```
 PORT=4000
 MONGODB_URI=mongodb://localhost:27017/skillcontest
-REDIS_URL=redis://localhost:6379
+UPSTASH_REDIS_REST_URL=<from Upstash console>
+UPSTASH_REDIS_REST_TOKEN=<from Upstash console>
 JWT_SECRET=<random-64-char-string>
 JWT_REFRESH_SECRET=<random-64-char-string>
 ENCRYPTION_KEY=<32-char-hex-string>

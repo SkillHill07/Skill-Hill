@@ -1,13 +1,13 @@
-import { Worker } from "bullmq"
-import { redis } from "../../config/redis.js"
+import { JobQueue } from "../../jobs/queue.js"
 import { judgeService } from "./judge.service.js"
 import { isDockerAvailable } from "./docker/sandbox.js"
 import { logger } from "../../utils/logger.js"
 
-let worker: Worker | null = null
+let worker: JobQueue<{ submissionId: string }> | null = null
 
 /**
- * Start the judge worker (BullMQ consumer for the "judge" queue).
+ * Start the judge worker (polls the Upstash Redis "judge" queue — see
+ * jobs/queue.ts).
  *
  * Runs in-process with the API for now, matching the contest worker pattern —
  * submissions are only ever *enqueued* from request handlers, so untrusted
@@ -18,32 +18,16 @@ let worker: Worker | null = null
  * Note: requires Docker on the host (DOCKER_HOST env on Windows,
  * e.g. npipe:////./pipe/docker_engine).
  */
-export function startJudgeWorker(): Worker {
+export function startJudgeWorker(): JobQueue<{ submissionId: string }> {
   if (worker) return worker
 
-  worker = new Worker(
-    "judge",
-    async (job) => {
-      const { submissionId } = job.data as { submissionId: string }
-      await judgeService.evaluateSubmission(submissionId)
-    },
-    {
-      connection: redis,
-      // Bounded by host Docker capacity — keep low so a contest flood can't
-      // exhaust memory on the host.
-      concurrency: 3,
-    },
-  )
-
-  worker.on("failed", (job, err) => {
-    logger.error(
-      { jobId: job?.id, submissionId: job?.data?.submissionId, err: err.message },
-      "judge_job_failed",
-    )
+  worker = new JobQueue<{ submissionId: string }>("judge", {
+    pollMs: 1000,
+    batchSize: 3,
   })
 
-  worker.on("completed", (job) => {
-    logger.debug({ jobId: job.id }, "judge_job_completed")
+  worker.start(async (_name, { submissionId }) => {
+    await judgeService.evaluateSubmission(submissionId)
   })
 
   // Warn early if Docker is unreachable so misconfig surfaces at startup.
@@ -57,6 +41,6 @@ export function startJudgeWorker(): Worker {
     }
   })
 
-  logger.info({ concurrency: 3 }, "judge_worker_started")
+  logger.info({ batchSize: 3 }, "judge_worker_started")
   return worker
 }

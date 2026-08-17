@@ -10,7 +10,10 @@ function env(key: string, fallback?: string): string {
 export const config = {
   PORT: Number(env("PORT", "4000")),
   MONGODB_URI: env("MONGODB_URI", "mongodb://localhost:27017/skillcontest"),
-  REDIS_URL: env("REDIS_URL", "redis://localhost:6379"),
+  // Upstash Redis (REST) — cache, OTP, refresh tokens, rate limiting, jobs.
+  // Get the URL + token from the Upstash console → database → Connect → REST.
+  UPSTASH_REDIS_REST_URL: env("UPSTASH_REDIS_REST_URL", ""),
+  UPSTASH_REDIS_REST_TOKEN: env("UPSTASH_REDIS_REST_TOKEN", ""),
   JWT_SECRET: env("JWT_SECRET", "dev-jwt-secret-do-not-use-in-production"),
   JWT_REFRESH_SECRET: env(
     "JWT_REFRESH_SECRET",
@@ -59,11 +62,6 @@ export const config = {
   EMAIL_USER: env("EMAIL_USER", ""),
   EMAIL_APP_PASSWORD: env("EMAIL_APP_PASSWORD", ""),
   NODE_ENV: env("NODE_ENV", "development"),
-
-  // Multi-instance socket.io: set to "true" when running 2+ API instances so
-  // socket events relay across processes via Redis pub/sub. Keep Redis healthy
-  // — with the adapter, ALL broadcast delivery goes through Redis.
-  SOCKET_REDIS_ADAPTER: env("SOCKET_REDIS_ADAPTER", "false") === "true",
 
   // Wallet — minimum withdrawal amount in paise (₹100 = 10000 paise).
   // ponytail: a per-day withdrawal cap is deferred — it needs a daily

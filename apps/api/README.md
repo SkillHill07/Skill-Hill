@@ -113,7 +113,7 @@ Reset tokens are `crypto.randomBytes(32)` hex strings stored in Redis (15min TTL
 
 ### Rate Limiting
 
-All limiters are **per-IP** using `rate-limiter-flexible` with Redis (production-ready, works across multiple instances).
+All limiters are **per-IP** fixed-window counters on Upstash Redis (shared across instances).
 
 | Endpoint | Limit | Window |
 |----------|-------|--------|
@@ -132,7 +132,8 @@ All limiters are **per-IP** using `rate-limiter-flexible` with Redis (production
 | `PORT` | No | 4000 | Server port |
 | `NODE_ENV` | No | development | Environment (development, production, test) |
 | `MONGODB_URI` | No* | mongodb://localhost:27017/skillcontest | MongoDB connection |
-| `REDIS_URL` | No | redis://localhost:6379 | Redis connection |
+| `UPSTASH_REDIS_REST_URL` | No* | — | Upstash Redis REST URL (cache, OTP, rate limits, tokens, jobs) |
+| `UPSTASH_REDIS_REST_TOKEN` | No* | — | Upstash Redis REST token |
 | `JWT_SECRET` | No* | dev-only | JWT signing key |
 | `JWT_REFRESH_SECRET` | No* | dev-only | Refresh token signing key |
 | `ENCRYPTION_KEY` | No* | dev-only | AES-256-GCM encryption key |

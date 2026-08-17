@@ -1,8 +1,6 @@
 import { Server, type Socket } from "socket.io"
 import type { Server as HttpServer } from "http"
-import { createAdapter } from "@socket.io/redis-adapter"
 import { config } from "../config/index.js"
-import { getRedis } from "../config/redis.js"
 import {
   verifyAccessToken,
   type TokenPayload,
@@ -13,8 +11,6 @@ import { setIO } from "./emitter.js"
 const allowedOrigins = config.CORS_ORIGINS.split(",").map((o) => o.trim())
 
 let io: Server | null = null
-// Pub/sub clients created for the Redis adapter (closed on shutdown).
-let adapterClients: Array<{ quit: () => Promise<unknown> }> = []
 
 /**
  * Extract the access token from a socket handshake. Order: handshake `auth`
@@ -75,19 +71,10 @@ export function initSocketServer(httpServer: HttpServer): Server {
     },
   })
 
-  // Multi-instance mode (SOCKET_REDIS_ADAPTER=true): relay broadcasts across
-  // processes via Redis pub/sub. The pub/sub clients inherit the app's resilient
-  // ioredis options (enableOfflineQueue) — the adapter's publish() is fire-and-
-  // forget with no catch, so offline queuing must stay ON to avoid unhandled
-  // rejections when Redis hiccups.
-  if (config.SOCKET_REDIS_ADAPTER) {
-    const pubClient = getRedis().duplicate()
-    const subClient = pubClient.duplicate()
-    io.adapter(createAdapter(pubClient, subClient))
-    adapterClients = [pubClient, subClient]
-    logger.info({}, "socket_redis_adapter_enabled")
-  }
-
+  // Single-instance mode: broadcasts reach clients connected to this process
+  // only. Multi-instance relay is NOT available — Upstash Redis (REST) has no
+  // pub/sub, so the old @socket.io/redis-adapter path was removed. If the API
+  // ever scales to 2+ instances, revisit with a TCP Redis or a broker.
   io.use(createSocketAuthMiddleware())
 
   io.on("connection", (socket) => {
@@ -112,8 +99,4 @@ export function closeSocketServer(): void {
     io = null
     setIO(null)
   }
-  for (const client of adapterClients) {
-    void client.quit().catch(() => {})
-  }
-  adapterClients = []
 }

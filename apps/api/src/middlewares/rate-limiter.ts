@@ -1,15 +1,47 @@
-import { RateLimiterRedis } from "rate-limiter-flexible"
 import { redis } from "../config/redis.js"
 import { logger } from "../utils/logger.js"
 import type { Request, Response, NextFunction } from "express"
 
 /**
- * Wraps a RateLimiterRedis instance into an Express middleware function.
+ * Fixed-window counter on Upstash Redis (replaces rate-limiter-flexible,
+ * which needs a TCP client). INCR + first-hit EXPIRE; consume() rejects
+ * with msBeforeNext when the window is exhausted.
+ * ponytail: INCR and EXPIRE are not atomic — if expire fails the key lives
+ * forever. A Lua script (redis.eval) makes it atomic; upgrade if keys leak.
+ */
+export class RedisRateLimiter {
+  readonly keyPrefix: string
+  private readonly points: number
+  private readonly duration: number
+
+  constructor(opts: { keyPrefix: string; points: number; duration: number }) {
+    this.keyPrefix = opts.keyPrefix
+    this.points = opts.points
+    this.duration = opts.duration
+  }
+
+  async consume(key: string): Promise<void> {
+    const fullKey = `${this.keyPrefix}${key}`
+    const count = await redis.incr(fullKey)
+    if (count === 1) {
+      await redis.expire(fullKey, this.duration)
+    }
+    if (count > this.points) {
+      const ttl = await redis.ttl(fullKey)
+      throw Object.assign(new Error("Rate limit exceeded"), {
+        msBeforeNext: ttl * 1000,
+      })
+    }
+  }
+}
+
+/**
+ * Wraps a RedisRateLimiter instance into an Express middleware function.
  * Consumes 1 point per request. Returns 429 with JSON error if limit exceeded.
  * Optionally keys on a custom identifier (e.g. authenticated userId) instead of IP.
  */
 export function createMiddleware(
-  limiter: RateLimiterRedis,
+  limiter: RedisRateLimiter,
   errorMessage: string,
   keyResolver?: (req: Request) => string,
 ) {
@@ -44,8 +76,7 @@ export function createMiddleware(
  * 5 attempts per IP per 60 second window.
  */
 export const loginLimiter = createMiddleware(
-  new RateLimiterRedis({
-    storeClient: redis,
+  new RedisRateLimiter({
     keyPrefix: "rl:login:",
     points: 5,
     duration: 60,
@@ -58,8 +89,7 @@ export const loginLimiter = createMiddleware(
  * 3 attempts per IP per 60 second window.
  */
 export const registerLimiter = createMiddleware(
-  new RateLimiterRedis({
-    storeClient: redis,
+  new RedisRateLimiter({
     keyPrefix: "rl:register:",
     points: 3,
     duration: 60,
@@ -72,8 +102,7 @@ export const registerLimiter = createMiddleware(
  * 10 attempts per IP per 60 second window.
  */
 export const refreshLimiter = createMiddleware(
-  new RateLimiterRedis({
-    storeClient: redis,
+  new RedisRateLimiter({
     keyPrefix: "rl:refresh:",
     points: 10,
     duration: 60,
@@ -86,8 +115,7 @@ export const refreshLimiter = createMiddleware(
  * 5 requests per IP per 60 second window.
  */
 export const sendOtpLimiter = createMiddleware(
-  new RateLimiterRedis({
-    storeClient: redis,
+  new RedisRateLimiter({
     keyPrefix: "rl:otp-send:",
     points: 5,
     duration: 60,
@@ -100,8 +128,7 @@ export const sendOtpLimiter = createMiddleware(
  * 5 requests per IP per 60 second window.
  */
 export const verifyOtpLimiter = createMiddleware(
-  new RateLimiterRedis({
-    storeClient: redis,
+  new RedisRateLimiter({
     keyPrefix: "rl:otp-verify:",
     points: 5,
     duration: 60,
@@ -114,8 +141,7 @@ export const verifyOtpLimiter = createMiddleware(
  * 3 requests per IP per 60 second window.
  */
 export const forgotPasswordLimiter = createMiddleware(
-  new RateLimiterRedis({
-    storeClient: redis,
+  new RedisRateLimiter({
     keyPrefix: "rl:forgot-pw:",
     points: 3,
     duration: 60,
@@ -128,8 +154,7 @@ export const forgotPasswordLimiter = createMiddleware(
  * 5 requests per IP per 60 second window.
  */
 export const resetPasswordLimiter = createMiddleware(
-  new RateLimiterRedis({
-    storeClient: redis,
+  new RedisRateLimiter({
     keyPrefix: "rl:reset-pw:",
     points: 5,
     duration: 60,
@@ -143,8 +168,7 @@ export const resetPasswordLimiter = createMiddleware(
  * Must be placed AFTER the `authenticate` middleware so req.user is set.
  */
 export const joinLimiter = createMiddleware(
-  new RateLimiterRedis({
-    storeClient: redis,
+  new RedisRateLimiter({
     keyPrefix: "rl:join:",
     points: 3,
     duration: 60,

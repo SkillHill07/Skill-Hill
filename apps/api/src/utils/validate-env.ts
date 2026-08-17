@@ -70,9 +70,14 @@ const CHECKS: EnvCheck[] = [
     feature: "GitHub OAuth sign-in",
   },
   {
-    key: "REDIS_URL",
-    value: config.REDIS_URL,
-    feature: "Rate limiting, refresh tokens, OTP storage, caching",
+    key: "UPSTASH_REDIS_REST_URL",
+    value: config.UPSTASH_REDIS_REST_URL,
+    feature: "Rate limiting, refresh tokens, OTP storage, caching, contest/judge jobs",
+  },
+  {
+    key: "UPSTASH_REDIS_REST_TOKEN",
+    value: config.UPSTASH_REDIS_REST_TOKEN,
+    feature: "Rate limiting, refresh tokens, OTP storage, caching, contest/judge jobs",
   },
   {
     key: "TURNSTILE_SECRET",

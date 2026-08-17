@@ -1,20 +1,15 @@
-import { Queue } from "bullmq"
-import { redis } from "../config/redis.js"
+import { JobQueue } from "./queue.js"
+
+export interface ContestJobData {
+  contestId: string
+}
 
 /**
- * Contest lifecycle queue.
+ * Contest lifecycle queue (Upstash Redis — see jobs/queue.ts).
  * - `freeze-contest` — delayed job at contest endTime (server-authoritative)
  * - `settle-contest` — runs after freeze, triggers prize distribution
  */
-export const contestQueue = new Queue("contest", {
-  connection: redis,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: { type: "exponential", delay: 5000 },
-    removeOnComplete: true,
-    removeOnFail: 100,
-  },
-})
+export const contestQueue = new JobQueue<ContestJobData>("contest")
 
 /**
  * Schedule the auto-freeze for a contest at its endTime.
@@ -24,11 +19,11 @@ export async function scheduleContestFreeze(
   contestId: string,
   endTime: Date,
 ): Promise<void> {
-  const delay = Math.max(0, endTime.getTime() - Date.now())
+  const delayMs = Math.max(0, endTime.getTime() - Date.now())
   await contestQueue.add(
     "freeze-contest",
     { contestId },
-    { delay, jobId: `freeze:${contestId}` },
+    { jobId: `freeze:${contestId}`, delayMs, attempts: 3, backoffMs: 5000 },
   )
 }
 
@@ -39,6 +34,6 @@ export async function scheduleContestSettle(contestId: string): Promise<void> {
   await contestQueue.add(
     "settle-contest",
     { contestId },
-    { jobId: `settle:${contestId}` },
+    { jobId: `settle:${contestId}`, attempts: 3, backoffMs: 5000 },
   )
 }

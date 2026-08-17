@@ -1,6 +1,6 @@
 import { createApp } from "./app.js"
 import { config } from "./config/index.js"
-import { connectRedis, redis } from "./config/redis.js"
+import { connectRedis } from "./config/redis.js"
 import { connectMongo, disconnectMongo } from "./config/mongodb.js"
 import { validateEnv } from "./utils/validate-env.js"
 import { logger } from "./utils/logger.js"
@@ -50,7 +50,6 @@ async function bootstrap() {
     server.close()
     try {
       await disconnectMongo()
-      await redis.quit()
     } catch (err) {
       logger.warn({ err: (err as Error).message }, "shutdown_cleanup_error")
     }

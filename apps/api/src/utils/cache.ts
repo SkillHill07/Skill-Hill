@@ -12,7 +12,7 @@ export const cacheKeys = {
  */
 export async function cacheGet<T>(key: string): Promise<T | null> {
   try {
-    const raw = await redis.get(key)
+    const raw = await redis.get<string>(key)
     if (!raw) return null
     return JSON.parse(raw) as T
   } catch {

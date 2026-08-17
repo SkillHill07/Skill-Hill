@@ -37,7 +37,7 @@ This file is binding. Every AI agent working on this repo must read it in full b
 - Turnstile verification (server-side `siteverify` call) required on: signup, login, contest-join, withdrawal. No other endpoints.
 - All input validated with Zod at the route boundary before reaching a service function.
 - Rate limiting (Redis-backed) on: OTP requests, login attempts, submissions, withdrawal requests.
-- Contest timing and final score freeze are **always server-authoritative** (BullMQ delayed job at `endTime`). Never trust a client-reported "time's up."
+- Contest timing and final score freeze are **always server-authoritative** (Upstash Redis delayed job, polled by the contest worker at `endTime`). Never trust a client-reported "time's up."
 - Never trust a client-side "payment success" callback. Only the verified webhook or a server-side payment status check confirms payment.
 - Code judge / untrusted code execution runs in an isolated worker, never inline in the API request thread.
 - Hidden test cases and correct-answer fields are stripped before any response is sent to a client.

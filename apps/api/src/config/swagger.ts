@@ -208,11 +208,11 @@ submissions:
 
 # Key Security Features
 - **JWT**: 7-day access tokens, 30-day refresh tokens with rotation (set as HttpOnly cookies)
-- **Redis**: Refresh token revocation, OTP storage, rate limiting cooldown
+- **Redis**: Refresh token revocation, OTP storage, rate limiting cooldown (Upstash Redis via REST)
 - **Turnstile**: CAPTCHA verification on register, login, forgot-password
 - **Encryption**: KYC fields (PAN, bank account, IFSC, UPI) encrypted at rest using AES-256-GCM
 - **Payments**: Razorpay orders with webhook-only capture confirmation (HMAC-verified raw body), idempotent wallet deposits, RazorpayX UPI payouts for withdrawals
-- **Rate Limiting**: Per-IP rate limiting on auth-sensitive endpoints (rate-limiter-flexible with Redis)
+- **Rate Limiting**: Per-IP rate limiting on auth-sensitive endpoints (fixed-window counters on Upstash Redis)
 - **Email Enumeration Prevention**: Forgot-password always returns success
 - **Session Revocation**: Password reset, account ban/flag, and logout revoke all active sessions
 - **Image Upload**: Avatars (400x400), language logos (256x256), problem images, and site logo/banner images compressed to WebP via Sharp, uploaded to Cloudflare R2, max 5MB

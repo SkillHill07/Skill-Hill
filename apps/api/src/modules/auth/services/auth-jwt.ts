@@ -30,12 +30,9 @@ export function verifyRefreshToken(token: string): TokenPayload {
 }
 
 export async function storeRefreshToken(userId: string, token: string): Promise<void> {
-  await redis.set(
-    `refresh:${userId}:${token}`,
-    "1",
-    "EX",
-    config.REFRESH_TOKEN_EXPIRY_SECONDS,
-  )
+  await redis.set(`refresh:${userId}:${token}`, "1", {
+    ex: config.REFRESH_TOKEN_EXPIRY_SECONDS,
+  })
 }
 
 export async function removeRefreshToken(userId: string, token: string): Promise<void> {
@@ -53,9 +50,12 @@ export async function revokeAllUserTokens(userId: string): Promise<void> {
   const keys: string[] = []
 
   do {
-    const result = await redis.scan(cursor, "MATCH", pattern, "COUNT", 100)
-    cursor = result[0]
-    keys.push(...result[1])
+    const [nextCursor, found] = await redis.scan(cursor, {
+      match: pattern,
+      count: 100,
+    })
+    cursor = nextCursor
+    keys.push(...found)
   } while (cursor !== "0")
 
   if (keys.length > 0) {
