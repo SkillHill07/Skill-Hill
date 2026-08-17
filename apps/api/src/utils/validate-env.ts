@@ -91,19 +91,29 @@ const CHECKS: EnvCheck[] = [
     feature: "Payment processing",
   },
   {
+    key: "RAZORPAY_WEBHOOK_SECRET",
+    value: config.RAZORPAY_WEBHOOK_SECRET,
+    feature: "Payment webhooks (wallet deposits on capture)",
+  },
+  {
+    key: "RAZORPAYX_ACCOUNT_NUMBER",
+    value: config.RAZORPAYX_ACCOUNT_NUMBER,
+    feature: "RazorpayX payouts (withdrawals)",
+  },
+  {
     key: "R2_ACCOUNT_ID",
     value: config.R2_ACCOUNT_ID,
-    feature: "Avatar image uploads (Cloudflare R2)",
+    feature: "Image uploads (avatars, language logos — Cloudflare R2)",
   },
   {
     key: "R2_ACCESS_KEY_ID",
     value: config.R2_ACCESS_KEY_ID,
-    feature: "Avatar image uploads (Cloudflare R2)",
+    feature: "Image uploads (avatars, language logos — Cloudflare R2)",
   },
   {
     key: "R2_SECRET_ACCESS_KEY",
     value: config.R2_SECRET_ACCESS_KEY,
-    feature: "Avatar image uploads (Cloudflare R2)",
+    feature: "Image uploads (avatars, language logos — Cloudflare R2)",
   },
 ]
 

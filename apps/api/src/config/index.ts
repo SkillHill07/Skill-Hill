@@ -23,6 +23,18 @@ export const config = {
   RAZORPAY_KEY_ID: env("RAZORPAY_KEY_ID", ""),
   RAZORPAY_KEY_SECRET: env("RAZORPAY_KEY_SECRET", ""),
   RAZORPAY_WEBHOOK_SECRET: env("RAZORPAY_WEBHOOK_SECRET", ""),
+  // RazorpayX — business settlement account used for withdrawals (payouts).
+  // The API key above must have payout permissions; the account number
+  // identifies the RazorpayX settlement account to debit from.
+  RAZORPAYX_ACCOUNT_NUMBER: env("RAZORPAYX_ACCOUNT_NUMBER", ""),
+
+  // Payment — deposit order bounds in paise (₹10 min, ₹5,000 max per order).
+  DEPOSIT_MIN_PAISE: Number(env("DEPOSIT_MIN_PAISE", "1000")),
+  DEPOSIT_MAX_PAISE: Number(env("DEPOSIT_MAX_PAISE", "500000")),
+
+  // Prizes — platform commission kept from the paid contest pool before
+  // distribution (0.1 = 10%). The net pool is split per the share table.
+  PLATFORM_FEE_RATE: Number(env("PLATFORM_FEE_RATE", "0.1")),
   R2_ACCOUNT_ID: env("R2_ACCOUNT_ID", ""),
   R2_ACCESS_KEY_ID: env("R2_ACCESS_KEY_ID", ""),
   R2_SECRET_ACCESS_KEY: env("R2_SECRET_ACCESS_KEY", ""),
@@ -47,6 +59,17 @@ export const config = {
   EMAIL_USER: env("EMAIL_USER", ""),
   EMAIL_APP_PASSWORD: env("EMAIL_APP_PASSWORD", ""),
   NODE_ENV: env("NODE_ENV", "development"),
+
+  // Multi-instance socket.io: set to "true" when running 2+ API instances so
+  // socket events relay across processes via Redis pub/sub. Keep Redis healthy
+  // — with the adapter, ALL broadcast delivery goes through Redis.
+  SOCKET_REDIS_ADAPTER: env("SOCKET_REDIS_ADAPTER", "false") === "true",
+
+  // Wallet — minimum withdrawal amount in paise (₹100 = 10000 paise).
+  // ponytail: a per-day withdrawal cap is deferred — it needs a daily
+  // aggregation query; add WITHDRAWAL_MAX_DAILY_PAISE when the payment
+  // module is battle-tested.
+  WITHDRAWAL_MIN_PAISE: Number(env("WITHDRAWAL_MIN_PAISE", "10000")),
 
   // Token durations
   ACCESS_TOKEN_EXPIRY: "7d",

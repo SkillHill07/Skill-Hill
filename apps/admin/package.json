@@ -13,6 +13,7 @@
     "@skillcontest/shared-types": "workspace:*",
     "@skillcontest/ui": "workspace:*",
     "@tanstack/react-query": "^5.62.7",
+    "lucide-react": "^0.460.0",
     "motion": "^11.15.0",
     "next": "^15.1.2",
     "react": "^19.0.0",

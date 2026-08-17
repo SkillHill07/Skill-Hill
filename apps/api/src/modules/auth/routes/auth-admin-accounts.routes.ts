@@ -9,6 +9,7 @@ import {
 import { changeStatusSchema, changeRoleSchema } from "../auth.validators.js"
 import { validateRequest } from "../../../middlewares/validate-request.js"
 import { sendSuccess } from "../../../utils/response.js"
+import { auditService } from "../../audit/audit.service.js"
 import type { Request, Response, NextFunction } from "express"
 
 export const adminAccountsRouter: Router = Router()
@@ -233,6 +234,15 @@ adminAccountsRouter.patch(
         req.user!.userId,
         req.body.reason,
       )
+      await auditService.log({
+        actorId: req.user!.userId,
+        actorRole: req.user!.role,
+        action: "user.status",
+        resource: "user",
+        resourceId: userId,
+        details: { status: req.body.status, reason: req.body.reason ?? null },
+        ip: req.ip ?? null,
+      })
       sendSuccess(res, user, `Account status changed to ${req.body.status}`)
     } catch (err) {
       next(err)
@@ -296,6 +306,15 @@ adminAccountsRouter.patch(
         req.body.role,
         req.user!.userId,
       )
+      await auditService.log({
+        actorId: req.user!.userId,
+        actorRole: req.user!.role,
+        action: "user.role",
+        resource: "user",
+        resourceId: userId,
+        details: { role: req.body.role },
+        ip: req.ip ?? null,
+      })
       sendSuccess(res, user, `Role changed to ${req.body.role}`)
     } catch (err) {
       next(err)

@@ -8,6 +8,7 @@ import {
 import { reviewKycSchema } from "../auth.validators.js"
 import { validateRequest } from "../../../middlewares/validate-request.js"
 import { sendSuccess } from "../../../utils/response.js"
+import { auditService } from "../../audit/audit.service.js"
 import type { Request, Response, NextFunction } from "express"
 
 export const adminKycRouter: Router = Router()
@@ -229,6 +230,18 @@ adminKycRouter.put(
         req.user!.role,
         req.body.rejectionReason,
       )
+      await auditService.log({
+        actorId: req.user!.userId,
+        actorRole: req.user!.role,
+        action: "kyc.review",
+        resource: "user",
+        resourceId: userId,
+        details: {
+          action: req.body.action,
+          rejectionReason: req.body.rejectionReason ?? null,
+        },
+        ip: req.ip ?? null,
+      })
       const actionLabel = req.body.action === "approved" ? "approved" : "rejected"
       sendSuccess(res, user, `KYC ${actionLabel} successfully`)
     } catch (err) {

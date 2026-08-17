@@ -18,31 +18,11 @@ import {
 } from "./auth-jwt.js"
 import { sendEmail } from "../../../utils/email.js"
 import { logger } from "../../../utils/logger.js"
+import { verifyTurnstile } from "../../../utils/turnstile.js"
 import { cacheGet, cacheSet, cacheDel, cacheKeys } from "../../../utils/cache.js"
 
 export { verifyAccessToken, revokeAllUserTokens }
 
-// --- Turnstile verification ---
-
-async function verifyTurnstile(token: string): Promise<boolean> {
-  if (config.NODE_ENV === "development" || config.NODE_ENV === "test") {
-    return true
-  }
-
-  const formData = new URLSearchParams()
-  formData.append("secret", config.TURNSTILE_SECRET)
-  formData.append("response", token)
-
-  const response = await fetch(
-    "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-    { method: "POST", body: formData },
-  )
-
-  const data = (await response.json()) as { success: boolean }
-  return data.success
-}
-
-// --- Service functions ---
 
 async function registerUser(
   input: RegisterBody,

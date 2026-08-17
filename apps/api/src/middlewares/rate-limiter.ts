@@ -6,21 +6,23 @@ import type { Request, Response, NextFunction } from "express"
 /**
  * Wraps a RateLimiterRedis instance into an Express middleware function.
  * Consumes 1 point per request. Returns 429 with JSON error if limit exceeded.
+ * Optionally keys on a custom identifier (e.g. authenticated userId) instead of IP.
  */
-function createMiddleware(
+export function createMiddleware(
   limiter: RateLimiterRedis,
   errorMessage: string,
+  keyResolver?: (req: Request) => string,
 ) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      await limiter.consume(req.ip ?? "unknown")
+      const key = keyResolver ? keyResolver(req) : req.ip ?? "unknown"
+      await limiter.consume(key)
       next()
     } catch (rejRes) {
       const rej = rejRes as { msBeforeNext?: number }
       // If msBeforeNext is missing, Redis might be down — fall back to 60s
       const retryAfter = rej.msBeforeNext ? Math.ceil(rej.msBeforeNext / 1000) : 60
       logger.warn({
-        ip: req.ip ?? "unknown",
         keyPrefix: limiter.keyPrefix,
         retryAfter,
         path: req.path,
@@ -134,3 +136,22 @@ export const resetPasswordLimiter = createMiddleware(
   }),
   "Too many reset attempts. Please try again after a minute.",
 )
+
+/**
+ * Rate limiter for contest joins.
+ * 3 join attempts per user per 60 second window.
+ * Must be placed AFTER the `authenticate` middleware so req.user is set.
+ */
+export const joinLimiter = createMiddleware(
+  new RateLimiterRedis({
+    storeClient: redis,
+    keyPrefix: "rl:join:",
+    points: 3,
+    duration: 60,
+  }),
+  "Too many join attempts. Please try again after a minute.",
+  (req) => req.user?.userId ?? req.ip ?? "unknown",
+)
+
+// Submission rate limiting (1 per 30s per problem) lands with the submission
+// module in Phase 4 — reusing this middleware factory there.

@@ -30,6 +30,12 @@ export interface IUser extends Document {
   upiIdEncrypted: string | null
   kycStatus: KycStatus
 
+  // RazorpayX payout plumbing (cached so payouts reuse the contact/fund
+  // account instead of recreating them every withdrawal)
+  razorpayContactId: string | null
+  razorpayFundAccountId: string | null
+  razorpayFundAccountUpi: string | null
+
   walletBalance: number
   refreshTokens: string[]
   lastLoginAt: Date | null
@@ -173,6 +179,18 @@ const userSchema = new Schema<IUser>(
       default: null,
       select: false,
     },
+    razorpayContactId: {
+      type: String,
+      default: null,
+    },
+    razorpayFundAccountId: {
+      type: String,
+      default: null,
+    },
+    razorpayFundAccountUpi: {
+      type: String,
+      default: null,
+    },
     kycStatus: {
       type: String,
       enum: {
@@ -212,6 +230,9 @@ const userSchema = new Schema<IUser>(
         delete ret.bankAccountNumberEncrypted
         delete ret.ifscCodeEncrypted
         delete ret.upiIdEncrypted
+        delete ret.razorpayContactId
+        delete ret.razorpayFundAccountId
+        delete ret.razorpayFundAccountUpi
         delete ret.__v
         return ret
       },
