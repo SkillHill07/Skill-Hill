@@ -21,6 +21,9 @@ import {
   uploadProblemImageSchema,
   removeProblemImageSchema,
   listPracticeProblemsSchema,
+  listContestProblemsSchema,
+  getContestProblemSchema,
+  getPracticeProblemSchema,
 } from "./problem.validation.js"
 import type { Request, Response, NextFunction } from "express"
 
@@ -118,6 +121,7 @@ practiceProblemRouter.get(
 practiceProblemRouter.get(
   "/:id",
   optionalAuth,
+  validateRequest(getPracticeProblemSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const problem = await problemService.getPracticeProblem(req.params.id as string)
@@ -153,6 +157,7 @@ const handleProblemImageErrors = createImageUploadErrorHandler(
 problemRouter.get(
   "/:contestId/problems",
   optionalAuth,
+  validateRequest(listContestProblemsSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Admin/creator can request hidden test cases via ?includeHidden=true
@@ -198,6 +203,7 @@ problemRouter.get(
 problemRouter.get(
   "/:contestId/problems/:problemId",
   optionalAuth,
+  validateRequest(getContestProblemSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Admin/creator can request hidden test cases via ?includeHidden=true

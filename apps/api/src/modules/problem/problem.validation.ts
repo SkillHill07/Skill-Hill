@@ -10,7 +10,7 @@ export const testCaseSchema = z.object({
 
 export const createProblemSchema = z.object({
   params: z.object({
-    contestId: z.string().min(1, "Contest id is required"),
+    contestId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid contest id"),
   }),
   body: z.object({
     title: z
@@ -74,8 +74,8 @@ export const createProblemSchema = z.object({
 
 export const updateProblemSchema = z.object({
   params: z.object({
-    contestId: z.string().min(1, "Contest id is required"),
-    problemId: z.string().min(1, "Problem id is required"),
+    contestId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid contest id"),
+    problemId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid problem id"),
   }),
   body: z.object({
     title: z.string().min(3).max(300).trim().optional(),
@@ -138,39 +138,58 @@ export const updateProblemSchema = z.object({
 
 export const deleteProblemSchema = z.object({
   params: z.object({
-    contestId: z.string().min(1, "Contest id is required"),
-    problemId: z.string().min(1, "Problem id is required"),
+    contestId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid contest id"),
+    problemId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid problem id"),
+  }),
+})
+
+export const listContestProblemsSchema = z.object({
+  params: z.object({
+    contestId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid contest id"),
+  }),
+})
+
+export const getContestProblemSchema = z.object({
+  params: z.object({
+    contestId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid contest id"),
+    problemId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid problem id"),
+  }),
+})
+
+export const getPracticeProblemSchema = z.object({
+  params: z.object({
+    id: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid problem id"),
   }),
 })
 
 export const uploadProblemImageSchema = z.object({
   params: z.object({
-    contestId: z.string().min(1, "Contest id is required"),
-    problemId: z.string().min(1, "Problem id is required"),
+    contestId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid contest id"),
+    problemId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid problem id"),
   }),
 })
 
 export const removeProblemImageSchema = z.object({
   params: z.object({
-    contestId: z.string().min(1, "Contest id is required"),
-    problemId: z.string().min(1, "Problem id is required"),
+    contestId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid contest id"),
+    problemId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid problem id"),
     index: z.string().regex(/^\d+$/, "Image index must be a non-negative integer"),
   }),
 })
 
 export const addTestCaseSchema = z.object({
   params: z.object({
-    contestId: z.string().min(1, "Contest id is required"),
-    problemId: z.string().min(1, "Problem id is required"),
+    contestId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid contest id"),
+    problemId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid problem id"),
   }),
   body: testCaseSchema,
 })
 
 export const removeTestCaseSchema = z.object({
   params: z.object({
-    contestId: z.string().min(1, "Contest id is required"),
-    problemId: z.string().min(1, "Problem id is required"),
-    testCaseId: z.string().min(1, "Test case id is required"),
+    contestId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid contest id"),
+    problemId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid problem id"),
+    testCaseId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid test case id"),
   }),
 })
 

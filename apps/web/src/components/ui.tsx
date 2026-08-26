@@ -12,7 +12,7 @@ type ButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "danger" | 
 
 const buttonVariants: Record<ButtonVariant, string> = {
   primary:
-    "bg-indigo-600 text-white hover:bg-indigo-500 focus-visible:ring-indigo-500 shadow-sm",
+    "bg-orange-600 text-white hover:bg-orange-500 focus-visible:ring-orange-500 shadow-sm",
   secondary: "bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white",
   outline:
     "border border-border bg-transparent hover:bg-accent hover:text-accent-foreground",
@@ -55,6 +55,16 @@ export function Button({
   )
 }
 
+/**
+ * Anchor styled as a Button — use when a link must look like a button.
+ * (<button><a> nesting is invalid HTML and breaks click handling.)
+ */
+export const anchorButtonClasses = cn(
+  "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  buttonVariants.outline,
+  "h-10 px-4 text-sm",
+)
+
 /* ------------------------------------------------------------------ */
 /* Card                                                                */
 /* ------------------------------------------------------------------ */
@@ -92,7 +102,7 @@ export function CardContent({ className, children }: { className?: string; child
 /* Badge                                                               */
 /* ------------------------------------------------------------------ */
 
-type BadgeTone = "neutral" | "green" | "amber" | "red" | "blue" | "violet" | "slate"
+type BadgeTone = "neutral" | "green" | "amber" | "red" | "blue" | "teal" | "slate"
 
 const badgeTones: Record<BadgeTone, string> = {
   neutral: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
@@ -100,7 +110,7 @@ const badgeTones: Record<BadgeTone, string> = {
   amber: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400",
   red: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400",
   blue: "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-400",
-  violet: "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400",
+  teal: "bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-400",
   slate: "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300",
 }
 
@@ -150,7 +160,7 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
   return (
     <input
       className={cn(
-        "h-10 w-full rounded-lg border border-input bg-background px-3 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-50",
+        "h-10 w-full rounded-lg border border-input bg-background px-3 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 disabled:opacity-50",
         className,
       )}
       {...props}
@@ -162,7 +172,7 @@ export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTex
   return (
     <textarea
       className={cn(
-        "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-50",
+        "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 disabled:opacity-50",
         className,
       )}
       {...props}

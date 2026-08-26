@@ -39,13 +39,11 @@ export async function createApp(): Promise<Express> {
   const app = express()
 
   app.use(helmet())
-  // Parse allowed origins from comma-separated env var
   const allowedOrigins = config.CORS_ORIGINS.split(",").map((o) => o.trim())
 
   app.use(
     cors({
       origin(origin, callback) {
-        // Allow requests with no origin (server-to-server, mobile apps, curl)
         if (!origin || allowedOrigins.includes(origin)) {
           callback(null, true)
         } else {

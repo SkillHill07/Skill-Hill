@@ -56,7 +56,9 @@ Point to the relevant installed skill for the type of work being done instead of
 
 ## Child DOX Index
 
-This root AGENTS.md owns the entire repo. Child AGENTS.md files may be added later under specific `apps/` or `packages/` directories as those sub-trees develop durable local rules.
+- `apps/api/AGENTS.md` — API session/auth contract, validation rules, run-vs-submit semantics, testing notes.
+- `apps/web/AGENTS.md` — route groups, auto-refresh API client, auth guards, Turnstile, SEO layout pattern.
+- `design.md` — the binding design system for web/admin UI work.
 
 ## After Editing
 

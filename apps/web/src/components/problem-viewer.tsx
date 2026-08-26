@@ -64,7 +64,7 @@ export function ProblemViewer({ problemId }: { problemId: string }) {
       <div className="mx-auto max-w-4xl px-4 py-10">
         <Link
           href="/problems"
-          className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+          className="inline-flex items-center gap-1 text-sm font-medium text-orange-600 hover:underline dark:text-orange-400"
         >
           <ArrowLeft className="h-4 w-4" /> Back to library
         </Link>
@@ -77,15 +77,17 @@ export function ProblemViewer({ problemId }: { problemId: string }) {
 
   if (!problem) return null
 
-  const templates = Object.entries(problem.solutionTemplate).filter(([, code]) => code)
-  const firstTemplateLang = problem.languageSupport[0] ?? templates[0]?.[0]
+  // API may omit these fields entirely (e.g. MCQs) — never assume presence.
+  const templates = Object.entries(problem.solutionTemplate ?? {}).filter(([, code]) => code)
+  const languageSupport = problem.languageSupport ?? []
+  const firstTemplateLang = languageSupport[0] ?? templates[0]?.[0]
   const firstTemplate = firstTemplateLang ? templates.find(([lang]) => lang === firstTemplateLang) ?? templates[0] : templates[0]
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
       <Link
         href="/problems"
-        className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+        className="inline-flex items-center gap-1 text-sm font-medium text-orange-600 hover:underline dark:text-orange-400"
       >
         <ArrowLeft className="h-4 w-4" /> Back to library
       </Link>
@@ -94,7 +96,7 @@ export function ProblemViewer({ problemId }: { problemId: string }) {
       <div className="mt-6">
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone={difficultyTone[problem.difficulty] ?? "neutral"}>{problem.difficulty}</Badge>
-          <Badge tone="violet">{problem.type === "mcq" ? "MCQ" : "Coding"}</Badge>
+          <Badge tone="teal">{problem.type === "mcq" ? "MCQ" : "Coding"}</Badge>
           <Badge tone="slate">{problem.points} pts</Badge>
           {problem.type === "coding" && (
             <>
@@ -113,7 +115,7 @@ export function ProblemViewer({ problemId }: { problemId: string }) {
             From contest{" "}
             <Link
               href={`/contests/${problem.contestId._id}`}
-              className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+              className="font-medium text-orange-600 hover:underline dark:text-orange-400"
             >
               {problem.contestId.title}
             </Link>
@@ -201,7 +203,7 @@ export function ProblemViewer({ problemId }: { problemId: string }) {
               </h2>
               {templates.length > 1 && (
                 <p className="text-xs text-muted-foreground">
-                  Available in: {problem.languageSupport.join(", ")}
+                  Available in: {languageSupport.join(", ")}
                 </p>
               )}
             </div>
@@ -221,17 +223,17 @@ export function ProblemViewer({ problemId }: { problemId: string }) {
             here, get judged against hidden test cases, and earn points on the
             leaderboard.
           </p>
-          <Button size="sm" className="ml-auto shrink-0">
-            <Link href="/contests">Find a contest</Link>
+          <Button size="sm" className="ml-auto shrink-0" onClick={() => (window.location.href = "/contests")}>
+            Find a contest
           </Button>
         </CardContent>
       </Card>
 
       {/* Language chips */}
-      {problem.languageSupport.length > 0 && (
+      {languageSupport.length > 0 && (
         <div className="mt-4 flex flex-wrap items-center gap-1.5">
-          <ListChecks className="h-4 w-4 text-muted-foreground" />
-          {problem.languageSupport.map((lang) => (
+          <ListChecks className="h-4 w-4 text-muted-foreground" aria-hidden />
+          {languageSupport.map((lang) => (
             <span
               key={lang}
               className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground"

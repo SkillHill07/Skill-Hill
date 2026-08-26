@@ -20,6 +20,8 @@ export interface ISubmission extends Document {
   problemId: Types.ObjectId
   language: string | null // language key; null for mcq (code holds the option index)
   code: string
+  /** "run" = public test cases only, no leaderboard effect. "submit" = full judge. */
+  mode: "run" | "submit"
   status: SubmissionStatus
   testResults: ITestResult[]
   publicPassed: number
@@ -89,6 +91,14 @@ const submissionSchema = new Schema<ISubmission>(
       type: String,
       required: [true, "Code is required"],
       maxlength: [200000, "Code is too long"],
+    },
+    mode: {
+      type: String,
+      enum: {
+        values: ["run", "submit"],
+        message: "{VALUE} is not a valid submission mode",
+      },
+      default: "submit",
     },
     status: {
       type: String,

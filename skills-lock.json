@@ -19,6 +19,12 @@
       "skillPath": "skills/backend-patterns/SKILL.md",
       "computedHash": "82ef426e6923d9ede1213e2062a0f069071afa3013f61b96d57db93d2dc2410c"
     },
+    "browser-act": {
+      "source": "browser-act/skills",
+      "sourceType": "github",
+      "skillPath": "browser-act/SKILL.md",
+      "computedHash": "3e3edc42bc0c7328ea3ecb91b16561f87c917e823de5a86a91fc1cfbf342d43d"
+    },
     "design-taste-frontend": {
       "source": "leonxlnx/taste-skill",
       "sourceType": "github",

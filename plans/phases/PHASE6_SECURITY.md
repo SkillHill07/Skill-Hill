@@ -16,7 +16,7 @@ Harden the platform against common vulnerabilities and ensure compliance with OW
   - Rate limiting: OTP, login, submission, withdrawal endpoints all Redis-backed
   - SQL/NoSQL injection: All DB queries use parameterized/ORM methods
   - XSS: React default escaping, no dangerouslySetInnerHTML without sanitization
-  - CSRF: API uses token-based auth (JWT in headers), not cookies
+  - CSRF: auth cookies are SameSite=Lax (blocks cross-site POSTs); OAuth flows add one-time Redis `state` values; state-changing endpoints require same-site cookie context
 
 ### 2. Payment Security
 - **Files**: `apps/api/src/modules/webhook/razorpay.webhook.ts`
@@ -46,21 +46,19 @@ Harden the platform against common vulnerabilities and ensure compliance with OW
   - Never return sensitive fields in API responses
 - **Skill**: security-review, backend-development
 
-### 5. JWT Hardening
-- **Files**: `apps/api/src/modules/auth/services/auth-jwt.ts` (already exists, verify)
-- **Actions**:
+### 5. JWT Hardening ✅
+- **Files**: `apps/api/src/modules/auth/services/auth-jwt.ts`
+- **Actions**: Done (2026-08 hardening pass):
   - Short-lived access tokens (15 min)
-  - Longer-lived refresh tokens (7 days)
-  - Refresh rotation on use
-  - Revocation list in Redis for logout/ban
-- **Skill**: security-review, backend-development, clerk-backend-api
+  - Longer-lived refresh tokens (7 days), single-use with rotation
+  - Refresh reuse detection ⇒ full revocation of all user sessions
+  - Revocation list in Redis for logout/ban/password-reset/role-change
+  - Tokens delivered via HttpOnly cookies only — never in response bodies
 
-### 6. Turnstile Integration
-- **Files**: `apps/api/src/middlewares/turnstile.ts`
-- **Actions**:
-  - Cloudflare Turnstile verification on: signup, login, contest-join, withdrawal
-  - Server-side `siteverify` call required
-- **Skill**: security-review
+### 6. Turnstile Integration ✅
+- **File**: `apps/api/src/utils/turnstile.ts`
+- **Actions**: Done. Cloudflare Turnstile verified server-side (`siteverify`) on: signup, login, forgot-password, contest-join, withdrawal. Dev/test bypasses via the always-pass test secret.
+- OAuth CSRF: one-time Redis-backed `state` values on Google/GitHub flows; banned/flagged accounts rejected at callback.
 
 ### 7. Audit Logging ✅
 - **File**: `apps/api/src/modules/audit/` (model, service, validation, routes, tests)
@@ -79,11 +77,9 @@ Harden the platform against common vulnerabilities and ensure compliance with OW
   - Log full error details server-side, return user-friendly message to client
 - **Skill**: express-typescript, security-review
 
-### 9. Rate Limiting
-- **File**: `apps/api/src/middlewares/rate-limit.ts`
-- **Actions**:
-  - Redis-backed rate limiting using `express-rate-limit` with Redis store
-  - Apply to: OTP requests (1/min), login (5/min), submissions (2/min), withdrawals (1/hour)
+### 9. Rate Limiting ✅
+- **File**: `apps/api/src/middlewares/rate-limiter.ts`
+- **Actions**: Done — custom Redis-backed fixed-window limiter on Upstash REST (no express-rate-limit dependency). Applied to: OTP send/verify (5/min), login (5/min), register (3/min), refresh (10/min), forgot/reset-password, submissions (1/30s per problem), contest join (3/min per user), withdrawals (3/5min per user).
 - **Skill**: backend-development, security-review
 
 ### 10. Hidden Test Case Protection

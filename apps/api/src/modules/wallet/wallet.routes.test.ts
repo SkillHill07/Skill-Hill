@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   razorpayKeyId: { value: "test_key_id" },
   razorpayxAccountNumber: { value: "7878780080316316" },
   initiatePayout: vi.fn(),
+  verifyTurnstile: vi.fn(),
 }))
 
 vi.mock("./wallet.service.js", () => ({
@@ -55,6 +56,14 @@ vi.mock("../../config/index.js", () => ({
 vi.mock("../../utils/logger.js", () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn(), fatal: vi.fn() },
 }))
+// Rate limiting is exercised in its own suite; here it's a pass-through so
+// route-contract assertions stay deterministic without Redis.
+vi.mock("../../middlewares/rate-limiter.js", () => ({
+  withdrawLimiter: (_req: Request, _res: Response, next: NextFunction) => next(),
+}))
+vi.mock("../../utils/turnstile.js", () => ({
+  verifyTurnstile: mocks.verifyTurnstile,
+}))
 
 const app = express()
 app.use(express.json())
@@ -65,6 +74,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.razorpayKeyId.value = "test_key_id"
   mocks.razorpayxAccountNumber.value = "7878780080316316"
+  mocks.verifyTurnstile.mockResolvedValue(true)
 })
 
 describe("GET /wallet/balance", () => {
@@ -170,17 +180,37 @@ describe("POST /wallet/withdraw", () => {
 
     const res = await request(app)
       .post("/withdraw")
-      .send({ amount: 10000, upiId: "user@upi" })
+      .send({ amount: 10000, upiId: "user@upi", turnstileToken: "tok" })
 
     expect(res.status).toBe(201)
+    expect(mocks.verifyTurnstile).toHaveBeenCalledWith("tok")
     expect(mocks.withdraw).toHaveBeenCalledWith("u1", 10000, {
       upiId: "user@upi",
       payout: mocks.initiatePayout,
     })
   })
 
+  it("rejects a missing turnstile token at the validation boundary", async () => {
+    const res = await request(app).post("/withdraw").send({ amount: 10000 })
+
+    expect(res.status).toBe(400)
+    expect(mocks.withdraw).not.toHaveBeenCalled()
+  })
+
+  it("rejects a failed turnstile verification with 400 before ledger work", async () => {
+    mocks.verifyTurnstile.mockResolvedValue(false)
+
+    const res = await request(app)
+      .post("/withdraw")
+      .send({ amount: 10000, turnstileToken: "bad" })
+
+    expect(res.status).toBe(400)
+    expect(res.body.code).toBe("TURNSTILE_FAILED")
+    expect(mocks.withdraw).not.toHaveBeenCalled()
+  })
+
   it("rejects amounts below the withdrawal minimum", async () => {
-    const res = await request(app).post("/withdraw").send({ amount: 5000 })
+    const res = await request(app).post("/withdraw").send({ amount: 5000, turnstileToken: "tok" })
 
     expect(res.status).toBe(400)
     expect(mocks.withdraw).not.toHaveBeenCalled()
@@ -189,7 +219,7 @@ describe("POST /wallet/withdraw", () => {
   it("returns 503 PAYMENTS_NOT_CONFIGURED before any ledger work when the payout gateway is not configured", async () => {
     mocks.razorpayxAccountNumber.value = ""
 
-    const res = await request(app).post("/withdraw").send({ amount: 10000 })
+    const res = await request(app).post("/withdraw").send({ amount: 10000, turnstileToken: "tok" })
 
     expect(res.status).toBe(503)
     expect(res.body).toMatchObject({ success: false, code: "PAYMENTS_NOT_CONFIGURED" })
@@ -199,7 +229,7 @@ describe("POST /wallet/withdraw", () => {
   it("also fast-fails 503 when Razorpay is not configured at all", async () => {
     mocks.razorpayKeyId.value = ""
 
-    const res = await request(app).post("/withdraw").send({ amount: 10000 })
+    const res = await request(app).post("/withdraw").send({ amount: 10000, turnstileToken: "tok" })
 
     expect(res.status).toBe(503)
     expect(mocks.withdraw).not.toHaveBeenCalled()

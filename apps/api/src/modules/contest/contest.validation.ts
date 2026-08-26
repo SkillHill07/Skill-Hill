@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+const OBJECT_ID = /^[a-f0-9]{24}$/i
+
 export const createContestSchema = z.object({
   body: z.object({
     title: z
@@ -45,7 +47,7 @@ export const createContestSchema = z.object({
 
 export const updateContestSchema = z.object({
   params: z.object({
-    id: z.string().min(1, "Contest id is required"),
+    id: z.string().regex(OBJECT_ID, "Invalid contest id"),
   }),
   body: z.object({
     title: z
@@ -90,15 +92,21 @@ export const updateContestSchema = z.object({
   }),
 })
 
+export const getContestSchema = z.object({
+  params: z.object({
+    id: z.string().regex(OBJECT_ID, "Invalid contest id"),
+  }),
+})
+
 export const publishContestSchema = z.object({
   params: z.object({
-    id: z.string().min(1, "Contest id is required"),
+    id: z.string().regex(OBJECT_ID, "Invalid contest id"),
   }),
 })
 
 export const cancelContestSchema = z.object({
   params: z.object({
-    id: z.string().min(1, "Contest id is required"),
+    id: z.string().regex(OBJECT_ID, "Invalid contest id"),
   }),
   body: z.object({
     reason: z.string().max(500, "Reason must be at most 500 characters").optional(),
@@ -107,19 +115,19 @@ export const cancelContestSchema = z.object({
 
 export const freezeContestSchema = z.object({
   params: z.object({
-    id: z.string().min(1, "Contest id is required"),
+    id: z.string().regex(OBJECT_ID, "Invalid contest id"),
   }),
 })
 
 export const settleContestSchema = z.object({
   params: z.object({
-    id: z.string().min(1, "Contest id is required"),
+    id: z.string().regex(OBJECT_ID, "Invalid contest id"),
   }),
 })
 
 export const joinContestSchema = z.object({
   params: z.object({
-    id: z.string().min(1, "Contest id is required"),
+    id: z.string().regex(OBJECT_ID, "Invalid contest id"),
   }),
   body: z.object({
     turnstileToken: z.string().min(1, "Turnstile verification is required"),
@@ -128,7 +136,7 @@ export const joinContestSchema = z.object({
 
 export const startContestSchema = z.object({
   params: z.object({
-    id: z.string().min(1, "Contest id is required"),
+    id: z.string().regex(OBJECT_ID, "Invalid contest id"),
   }),
 })
 

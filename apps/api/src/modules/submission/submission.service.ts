@@ -89,6 +89,8 @@ async function createSubmission(
     problemId: input.problemId,
     language,
     code: input.code,
+    // Runs are a coding-problem affordance; MCQs are always scored submits.
+    mode: problem.type === "mcq" ? "submit" : (input.mode ?? "submit"),
     status: "pending",
   })
 

@@ -262,6 +262,8 @@ export interface Submission {
   problemId: string
   language: string | null // language key; null for mcq (code holds the chosen option index)
   code: string
+  /** "run" = public test cases only, no leaderboard effect. "submit" = full judge. */
+  mode: "run" | "submit"
   status: SubmissionStatus
   testResults: SubmissionTestCaseResult[] // public cases only — hidden cases stored as counts
   publicPassed: number

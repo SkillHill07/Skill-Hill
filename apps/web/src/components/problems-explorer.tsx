@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query"
 import { ChevronLeft, ChevronRight, Code2, ListChecks, Search } from "lucide-react"
 import { useMemo, useState } from "react"
 import { api } from "@/lib/api"
-import { Badge, Button, Card, CardContent, EmptyState, Input, Skeleton } from "./ui"
+import { Badge, Button, Card, CardContent, EmptyState, ErrorBanner, Input, Skeleton } from "./ui"
 import { SectionHeading } from "./marketing"
 import { inr } from "@/lib/format"
 
@@ -74,7 +74,7 @@ export function ProblemsExplorer({
     return p.toString()
   }, [search, difficulty, type, page])
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["problems", params],
     queryFn: () => api.get<ListResponse>(`/problems?${params}`),
   })
@@ -96,7 +96,7 @@ export function ProblemsExplorer({
       {/* Filters */}
       <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
           <Input
             value={search}
             onChange={(e) => {
@@ -147,28 +147,32 @@ export function ProblemsExplorer({
             <Skeleton key={i} className="h-40" />
           ))}
         </div>
+      ) : isError ? (
+        <div className="mt-8">
+          <ErrorBanner message="Couldn't load the practice library. Check your connection and try again." />
+        </div>
       ) : data && data.problems.length > 0 ? (
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data.problems.map((p) => (
             <Link key={p._id} href={`/problems/${p._id}`} className="group block">
-              <Card className="h-full transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-indigo-300 group-hover:shadow-md dark:group-hover:border-indigo-500/50">
+              <Card className="h-full transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-orange-300 group-hover:shadow-md dark:group-hover:border-orange-500/50">
                 <CardContent className="flex h-full flex-col gap-3 p-5">
                   <div className="flex items-center justify-between gap-2">
                     <Badge tone={difficultyTone[p.difficulty] ?? "neutral"}>{p.difficulty}</Badge>
                     <div className="flex items-center gap-2">
                       {p.type === "mcq" ? (
                         <Badge tone="blue">
-                          <ListChecks className="h-3 w-3" /> MCQ
+                          <ListChecks className="h-3 w-3" aria-hidden /> MCQ
                         </Badge>
                       ) : (
-                        <Badge tone="violet">
-                          <Code2 className="h-3 w-3" /> Coding
+                        <Badge tone="teal">
+                          <Code2 className="h-3 w-3" aria-hidden /> Coding
                         </Badge>
                       )}
                       <Badge tone="slate">{p.points} pts</Badge>
                     </div>
                   </div>
-                  <h3 className="text-base font-semibold leading-snug transition-colors group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                  <h3 className="text-base font-semibold leading-snug transition-colors group-hover:text-orange-600 dark:group-hover:text-orange-400">
                     {p.title}
                   </h3>
                   {p.contestId && (
@@ -214,7 +218,7 @@ export function ProblemsExplorer({
               disabled={data.page <= 1}
               onClick={() => changePage(data.page - 1)}
             >
-              <ChevronLeft className="h-4 w-4" /> Prev
+              <ChevronLeft className="h-4 w-4" aria-hidden /> Prev
             </Button>
             <Button
               variant="outline"
@@ -222,7 +226,7 @@ export function ProblemsExplorer({
               disabled={data.page >= data.totalPages}
               onClick={() => changePage(data.page + 1)}
             >
-              Next <ChevronRight className="h-4 w-4" />
+              Next <ChevronRight className="h-4 w-4" aria-hidden />
             </Button>
           </div>
         </div>

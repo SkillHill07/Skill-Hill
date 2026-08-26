@@ -37,6 +37,7 @@ export const withdrawSchema = z.object({
         `Minimum withdrawal is ₹${config.WITHDRAWAL_MIN_PAISE / 100}`,
       ),
     upiId: z.string().min(3, "UPI id must be at least 3 characters").max(100).optional(),
+    turnstileToken: z.string().min(1, "Human verification is required"),
   }),
 })
 

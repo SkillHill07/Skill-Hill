@@ -61,7 +61,11 @@ async function persistResult(
 ): Promise<ISubmission> {
   Object.assign(submission, patch, { judgedAt: new Date() })
   await submission.save()
-  await updateParticipationScore(submission)
+  // Run-mode submissions are practice checks — they never affect the
+  // participant's leaderboard score.
+  if (submission.mode !== "run") {
+    await updateParticipationScore(submission)
+  }
   // Single choke point — every final path (mcq, coding, error, no-problem)
   // funnels through here, so the client gets exactly one "completed" event.
   emitSubmissionCompleted(submission)
@@ -146,7 +150,10 @@ async function evaluateCoding(
     })
   }
 
-  const testCases = await problemService.getTestCases(problem._id.toString(), true)
+  // Run mode: judge public test cases only — hidden cases stay unseen and
+  // unscored. Submit mode: the full public + hidden suite.
+  const isRun = submission.mode === "run"
+  const testCases = await problemService.getTestCases(problem._id.toString(), !isRun)
   if (testCases.length === 0) {
     return persistResult(submission, {
       status: "error",
@@ -225,6 +232,12 @@ async function evaluateCoding(
   const maxDuration = Math.max(0, ...results.map((r) => r.run.durationMs))
   const maxMemoryBytes = Math.max(0, ...results.map((r) => r.run.memoryBytes))
 
+  // Run-mode results are informational — zero score, hidden counts stay 0.
+  const score =
+    isRun || status === "error" || status === "timeout"
+      ? 0
+      : calculateScore(problem.points, publicPassed, publicCases.length, hiddenPassed, hiddenCases.length)
+
   return persistResult(submission, {
     status,
     testResults: publicCases.map((r) => ({
@@ -236,15 +249,9 @@ async function evaluateCoding(
     })),
     publicPassed,
     publicTotal: publicCases.length,
-    hiddenPassed,
-    hiddenTotal: hiddenCases.length,
-    totalScore: calculateScore(
-      problem.points,
-      publicPassed,
-      publicCases.length,
-      hiddenPassed,
-      hiddenCases.length,
-    ),
+    hiddenPassed: isRun ? 0 : hiddenPassed,
+    hiddenTotal: isRun ? 0 : hiddenCases.length,
+    totalScore: score,
     executionTime: maxDuration,
     memoryUsed: Math.round(maxMemoryBytes / 1024), // KB
     compilerOutput,

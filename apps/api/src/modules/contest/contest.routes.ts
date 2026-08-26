@@ -9,6 +9,7 @@ import { auditService } from "../audit/audit.service.js"
 import {
   createContestSchema,
   updateContestSchema,
+  getContestSchema,
   publishContestSchema,
   cancelContestSchema,
   freezeContestSchema,
@@ -93,6 +94,7 @@ contestRouter.get(
 contestRouter.get(
   "/:id",
   optionalAuth,
+  validateRequest(getContestSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const contest = await contestService.getContestById(

@@ -1,4 +1,6 @@
+import crypto from "crypto"
 import { config } from "../../../config/index.js"
+import { redis } from "../../../config/redis.js"
 import { User, type IUser } from "../auth.schema.js"
 import type { AuthTokens } from "@skillcontest/shared-types"
 import {
@@ -8,6 +10,7 @@ import {
   pushRefreshToken,
 } from "./auth-jwt.js"
 import { logger } from "../../../utils/logger.js"
+import { assertAccountStatus } from "./auth-google.service.js"
 
 const GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize"
 const GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
@@ -16,12 +19,33 @@ const GITHUB_EMAIL_URL = "https://api.github.com/user/emails"
 
 const SCOPES = ["read:user", "user:email"]
 
-interface GithubTokenResponse {
-  access_token: string
-  token_type: string
-  scope: string
-  error?: string
-  error_description?: string
+// CSRF protection: one-time state values with a 10-minute TTL.
+const OAUTH_STATE_TTL_SECONDS = 600
+const OAUTH_STATE_PREFIX = "oauth:state:github:"
+
+export async function createGithubOAuthState(): Promise<string> {
+  const state = crypto.randomBytes(16).toString("hex")
+  await redis.set(`${OAUTH_STATE_PREFIX}${state}`, "1", {
+    ex: OAUTH_STATE_TTL_SECONDS,
+  })
+  return state
+}
+
+export async function consumeGithubOAuthState(state: string): Promise<boolean> {
+  if (!state) return false
+  const deleted = await redis.del(`${OAUTH_STATE_PREFIX}${state}`)
+  return deleted > 0
+}
+
+export function getGithubAuthUrl(state?: string): string {
+  const params = new URLSearchParams({
+    client_id: config.GITHUB_CLIENT_ID,
+    redirect_uri: config.GITHUB_CALLBACK_URL,
+    scope: SCOPES.join(","),
+    allow_signup: "true",
+  })
+  if (state) params.set("state", state)
+  return `${GITHUB_AUTH_URL}?${params.toString()}`
 }
 
 interface GithubUserInfo {
@@ -32,21 +56,19 @@ interface GithubUserInfo {
   avatar_url: string
 }
 
+interface GithubTokenResponse {
+  access_token: string
+  token_type: string
+  scope: string
+  error?: string
+  error_description?: string
+}
+
 interface GithubEmail {
   email: string
   primary: boolean
   verified: boolean
   visibility: string | null
-}
-
-export function getGithubAuthUrl(): string {
-  const params = new URLSearchParams({
-    client_id: config.GITHUB_CLIENT_ID,
-    redirect_uri: config.GITHUB_CALLBACK_URL,
-    scope: SCOPES.join(","),
-    allow_signup: "true",
-  })
-  return `${GITHUB_AUTH_URL}?${params.toString()}`
 }
 
 async function exchangeCodeForTokens(code: string): Promise<string> {
@@ -131,13 +153,16 @@ export async function handleGithubCallback(
   const accessToken = await exchangeCodeForTokens(code)
   const githubUser = await getUserInfo(accessToken)
 
+  // +refreshTokens: the field is select:false and we push to it below.
   let user = await User.findOne({
     $or: [{ githubId: String(githubUser.id) }, { email: githubUser.verified_email }],
-  })
+  }).select("+refreshTokens")
 
   let isNewUser = false
 
   if (user) {
+    // Banned/flagged accounts must never regain access via OAuth
+    assertAccountStatus(user)
     if (!user.githubId) {
       user.githubId = String(githubUser.id)
       user.authProvider = user.authProvider === "google" ? "email" : "email"

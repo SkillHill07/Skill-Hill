@@ -64,8 +64,8 @@ const PNG_BYTES = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
 const IMAGE_URL = "https://pub-test.r2.dev/problems/p1/0123456789abcdef.webp"
 
 const problemDoc = {
-  _id: "p1",
-  contestId: "c1",
+  _id: "bbbbbbbbbbbbbbbbbbbbbbbb",
+  contestId: "aaaaaaaaaaaaaaaaaaaaaaaa",
   title: "Sum of Two Numbers",
   description: "Add two numbers",
   imageUrls: [IMAGE_URL],
@@ -86,7 +86,7 @@ describe("POST /contests/:contestId/problems/:problemId/images", () => {
     mocks.addProblemImage.mockResolvedValue(problemDoc)
 
     const res = await request(app)
-      .post("/c1/problems/p1/images")
+      .post("/aaaaaaaaaaaaaaaaaaaaaaaa/problems/bbbbbbbbbbbbbbbbbbbbbbbb/images")
       .attach("image", PNG_BYTES, { filename: "diagram.png", contentType: "image/png" })
 
     expect(res.status).toBe(200)
@@ -94,22 +94,22 @@ describe("POST /contests/:contestId/problems/:problemId/images", () => {
     expect(res.body.data.imageUrls).toContain(IMAGE_URL)
 
     // The problem must be editable BEFORE upload (no orphaned R2 objects).
-    expect(mocks.assertProblemEditable).toHaveBeenCalledWith("c1", "p1")
+    expect(mocks.assertProblemEditable).toHaveBeenCalledWith("aaaaaaaaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbbbbbbbbbb")
     const [buffer, mime, opts] = mocks.uploadImageToR2.mock.calls[0]
     expect(buffer).toEqual(PNG_BYTES)
     expect(mime).toBe("image/png")
     expect(opts).toMatchObject({
       folder: "problems",
-      identifier: "p1",
+      identifier: "bbbbbbbbbbbbbbbbbbbbbbbb",
       maxWidth: 1280,
       maxHeight: 1024,
       quality: 82,
     })
-    expect(mocks.addProblemImage).toHaveBeenCalledWith("c1", "p1", IMAGE_URL)
+    expect(mocks.addProblemImage).toHaveBeenCalledWith("aaaaaaaaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbbbbbbbbbb", IMAGE_URL)
   })
 
   it("rejects with 400 IMAGE_REQUIRED when no file is attached", async () => {
-    const res = await request(app).post("/c1/problems/p1/images")
+    const res = await request(app).post("/aaaaaaaaaaaaaaaaaaaaaaaa/problems/bbbbbbbbbbbbbbbbbbbbbbbb/images")
 
     expect(res.status).toBe(400)
     expect(res.body).toMatchObject({ success: false, code: "IMAGE_REQUIRED" })
@@ -118,7 +118,7 @@ describe("POST /contests/:contestId/problems/:problemId/images", () => {
 
   it("rejects disallowed MIME types with 400 INVALID_PROBLEM_IMAGE", async () => {
     const res = await request(app)
-      .post("/c1/problems/p1/images")
+      .post("/aaaaaaaaaaaaaaaaaaaaaaaa/problems/bbbbbbbbbbbbbbbbbbbbbbbb/images")
       .attach("image", Buffer.from("not an image"), {
         filename: "diagram.txt",
         contentType: "text/plain",
@@ -134,7 +134,7 @@ describe("POST /contests/:contestId/problems/:problemId/images", () => {
     const oversized = Buffer.alloc(5 * 1024 * 1024 + 1)
 
     const res = await request(app)
-      .post("/c1/problems/p1/images")
+      .post("/aaaaaaaaaaaaaaaaaaaaaaaa/problems/bbbbbbbbbbbbbbbbbbbbbbbb/images")
       .attach("image", oversized, { filename: "big.png", contentType: "image/png" })
 
     expect(res.status).toBe(400)
@@ -152,7 +152,7 @@ describe("POST /contests/:contestId/problems/:problemId/images", () => {
     )
 
     const res = await request(app)
-      .post("/c1/problems/p1/images")
+      .post("/aaaaaaaaaaaaaaaaaaaaaaaa/problems/bbbbbbbbbbbbbbbbbbbbbbbb/images")
       .attach("image", PNG_BYTES, { filename: "diagram.png", contentType: "image/png" })
 
     expect(res.status).toBe(404)
@@ -171,7 +171,7 @@ describe("POST /contests/:contestId/problems/:problemId/images", () => {
     )
 
     const res = await request(app)
-      .post("/c1/problems/p1/images")
+      .post("/aaaaaaaaaaaaaaaaaaaaaaaa/problems/bbbbbbbbbbbbbbbbbbbbbbbb/images")
       .attach("image", PNG_BYTES, { filename: "diagram.png", contentType: "image/png" })
 
     expect(res.status).toBe(500)
@@ -188,12 +188,12 @@ describe("DELETE /contests/:contestId/problems/:problemId/images/:index", () => 
   it("removes the image at the given index", async () => {
     mocks.removeProblemImage.mockResolvedValue({ ...problemDoc, imageUrls: [] })
 
-    const res = await request(app).delete("/c1/problems/p1/images/0")
+    const res = await request(app).delete("/aaaaaaaaaaaaaaaaaaaaaaaa/problems/bbbbbbbbbbbbbbbbbbbbbbbb/images/0")
 
     expect(res.status).toBe(200)
     expect(res.body.success).toBe(true)
     expect(res.body.data.imageUrls).toEqual([])
-    expect(mocks.removeProblemImage).toHaveBeenCalledWith("c1", "p1", 0)
+    expect(mocks.removeProblemImage).toHaveBeenCalledWith("aaaaaaaaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbbbbbbbbbb", 0)
   })
 
   it("rejects an out-of-range index", async () => {
@@ -204,14 +204,14 @@ describe("DELETE /contests/:contestId/problems/:problemId/images/:index", () => 
       }),
     )
 
-    const res = await request(app).delete("/c1/problems/p1/images/9")
+    const res = await request(app).delete("/aaaaaaaaaaaaaaaaaaaaaaaa/problems/bbbbbbbbbbbbbbbbbbbbbbbb/images/9")
 
     expect(res.status).toBe(400)
     expect(res.body).toMatchObject({ success: false, code: "INVALID_IMAGE_INDEX" })
   })
 
   it("rejects a non-numeric index at the validation boundary", async () => {
-    const res = await request(app).delete("/c1/problems/p1/images/abc")
+    const res = await request(app).delete("/aaaaaaaaaaaaaaaaaaaaaaaa/problems/bbbbbbbbbbbbbbbbbbbbbbbb/images/abc")
 
     expect(res.status).toBe(400)
     expect(mocks.removeProblemImage).not.toHaveBeenCalled()

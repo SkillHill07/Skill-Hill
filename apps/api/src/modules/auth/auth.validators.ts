@@ -147,33 +147,38 @@ export const setPasswordSchema = z.object({
   }),
 })
 
+// Base field validators for profile updates. Exported separately because
+// PUT /auth/me accepts multipart/form-data (fields arrive as strings) plus an
+// optional avatar file — so "at least one field" cannot be enforced here.
+export const updateProfileFieldsSchema = z.object({
+  firstName: z
+    .string()
+    .min(1, "First name is required")
+    .max(50, "First name must be at most 50 characters")
+    .regex(/^[a-zA-Z\s'-]+$/, "First name can only contain letters, spaces, hyphens, and apostrophes")
+    .trim()
+    .optional(),
+  lastName: z
+    .string()
+    .min(1, "Last name is required")
+    .max(50, "Last name must be at most 50 characters")
+    .regex(/^[a-zA-Z\s'-]+$/, "Last name can only contain letters, spaces, hyphens, and apostrophes")
+    .trim()
+    .optional(),
+  phone: z
+    .string()
+    .regex(/^\d{5,15}$/, "Phone number must be 5-15 digits")
+    .nullable()
+    .optional(),
+  phoneCountryCode: z
+    .string()
+    .regex(/^\+\d{1,4}$/, "Country code must be like +91")
+    .nullable()
+    .optional(),
+})
+
 export const updateProfileSchema = z.object({
-  body: z.object({
-    firstName: z
-      .string()
-      .min(1, "First name is required")
-      .max(50, "First name must be at most 50 characters")
-      .regex(/^[a-zA-Z\s'-]+$/, "First name can only contain letters, spaces, hyphens, and apostrophes")
-      .trim()
-      .optional(),
-    lastName: z
-      .string()
-      .min(1, "Last name is required")
-      .max(50, "Last name must be at most 50 characters")
-      .regex(/^[a-zA-Z\s'-]+$/, "Last name can only contain letters, spaces, hyphens, and apostrophes")
-      .trim()
-      .optional(),
-    phone: z
-      .string()
-      .regex(/^\d{5,15}$/, "Phone number must be 5-15 digits")
-      .nullable()
-      .optional(),
-    phoneCountryCode: z
-      .string()
-      .regex(/^\+\d{1,4}$/, "Country code must be like +91")
-      .nullable()
-      .optional(),
-  }).refine(
+  body: updateProfileFieldsSchema.refine(
     (data) => data.firstName !== undefined || data.lastName !== undefined || data.phone !== undefined || data.phoneCountryCode !== undefined,
     { message: "At least one field must be provided for update" },
   ),

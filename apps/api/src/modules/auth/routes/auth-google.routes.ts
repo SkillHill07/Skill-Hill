@@ -3,11 +3,14 @@ import {
   getGoogleAuthUrl,
   handleGoogleCallback,
   linkGoogleAccount,
+  createOAuthState,
+  consumeOAuthState,
 } from "../services/auth-google.service.js"
 import { authenticate } from "../middleware/auth.middleware.js"
 import { config } from "../../../config/index.js"
 import { sendError, sendSuccess } from "../../../utils/response.js"
 import { setAuthCookies } from "../../../utils/cookies.js"
+import { logger } from "../../../utils/logger.js"
 import type { Request, Response, NextFunction } from "express"
 
 export const googleAuthRouter: Router = Router()
@@ -32,7 +35,7 @@ export const googleAuthRouter: Router = Router()
  *             schema:
  *               $ref: "#/components/schemas/ErrorResponse"
  */
-googleAuthRouter.get("/", (_req: Request, res: Response) => {
+googleAuthRouter.get("/", async (_req: Request, res: Response) => {
   if (!config.GOOGLE_CLIENT_ID) {
     res.status(503).json({
       success: false,
@@ -41,7 +44,8 @@ googleAuthRouter.get("/", (_req: Request, res: Response) => {
     return
   }
 
-  const authUrl = getGoogleAuthUrl()
+  const state = await createOAuthState()
+  const authUrl = getGoogleAuthUrl(state)
   res.redirect(authUrl)
 })
 
@@ -54,8 +58,8 @@ googleAuthRouter.get("/", (_req: Request, res: Response) => {
  *     description: >
  *       Google redirects to this URL after the user consents.
  *       The authorization code is exchanged for tokens, and
- *       the user is created or logged in. The frontend is redirected
- *       with accessToken and refreshToken as query parameters.
+ *       the user is created or logged in. Session cookies are set
+ *       (HttpOnly) and the browser is redirected to the frontend.
  *     parameters:
  *       - in: query
  *         name: code
@@ -63,6 +67,12 @@ googleAuthRouter.get("/", (_req: Request, res: Response) => {
  *         schema:
  *           type: string
  *         description: Authorization code from Google
+ *       - in: query
+ *         name: state
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: One-time CSRF state issued by GET /auth/google
  *       - in: query
  *         name: error
  *         required: false
@@ -72,8 +82,8 @@ googleAuthRouter.get("/", (_req: Request, res: Response) => {
  *     responses:
  *       302:
  *         description: >
- *           Redirects to frontend with tokens in query params.
- *           On success: {FRONTEND_URL}/auth/callback?accessToken=...&refreshToken=...&isNewUser=true
+ *           Redirects to the frontend with session cookies set.
+ *           On success: {FRONTEND_URL}/auth/callback?isNewUser=true|false
  *           On error: {FRONTEND_URL}/auth/callback?error=...
  *       400:
  *         description: Missing authorization code
@@ -86,14 +96,22 @@ googleAuthRouter.get(
   "/callback",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { code, error: googleError } = req.query
+      const { code, state, error: googleError } = req.query
+
+      const frontendUrl = config.FRONTEND_URL
+      const fail = (message: string) =>
+        res.redirect(`${frontendUrl}/auth/callback?error=${encodeURIComponent(message)}`)
 
       // Handle user denying consent
       if (googleError) {
-        const frontendUrl = config.FRONTEND_URL
-        res.redirect(
-          `${frontendUrl}/auth/callback?error=${encodeURIComponent("Google sign-in was cancelled")}`,
-        )
+        fail("Google sign-in was cancelled")
+        return
+      }
+
+      // CSRF protection: state must be a value we issued and not yet consumed
+      if (typeof state !== "string" || !(await consumeOAuthState(state))) {
+        logger.warn("google_oauth_failed: invalid_state")
+        fail("Sign-in session expired. Please try again.")
         return
       }
 
@@ -107,8 +125,7 @@ googleAuthRouter.get(
       // Set HttpOnly cookies on the API domain
       setAuthCookies(res, tokens.accessToken, tokens.refreshToken)
 
-      // Redirect to frontend — tokens are in cookies, not the URL
-      const frontendUrl = config.FRONTEND_URL
+      // Redirect to frontend — tokens are in cookies, never in the URL
       res.redirect(`${frontendUrl}/auth/callback?isNewUser=${isNewUser}`)
     } catch (err) {
       next(err)
@@ -213,7 +230,7 @@ googleAuthRouter.post(
  *       503:
  *         description: Google OAuth not configured
  */
-googleAuthRouter.get("/url", (_req: Request, res: Response) => {
+googleAuthRouter.get("/url", async (_req: Request, res: Response) => {
   if (!config.GOOGLE_CLIENT_ID) {
     res.status(503).json({
       success: false,
@@ -222,6 +239,7 @@ googleAuthRouter.get("/url", (_req: Request, res: Response) => {
     return
   }
 
-  const authUrl = getGoogleAuthUrl()
+  const state = await createOAuthState()
+  const authUrl = getGoogleAuthUrl(state)
   sendSuccess(res, { url: authUrl })
 })

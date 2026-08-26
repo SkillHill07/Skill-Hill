@@ -89,7 +89,7 @@ async function loginUser(
     })
   }
 
-  const user = await User.findOne({ email: input.email }).select("+password")
+  const user = await User.findOne({ email: input.email }).select("+password +refreshTokens")
   if (!user) {
     logger.warn({ email: input.email }, "login_failed: user_not_found")
     throw Object.assign(new Error("Invalid email or password"), {
@@ -197,7 +197,9 @@ async function refreshTokens(
 
   await storeRefreshToken(payload.userId, refreshToken)
 
-  const user = await User.findById(payload.userId)
+  // refreshTokens is select:false in the schema — it must be explicitly
+  // included or the array read below crashes (undefined.filter).
+  const user = await User.findById(payload.userId).select("+refreshTokens")
   if (!user) {
     throw Object.assign(new Error("User not found"), {
       status: 404,
@@ -218,7 +220,7 @@ async function refreshTokens(
     tokens: {
       accessToken,
       refreshToken,
-      expiresIn: 900,
+      expiresIn: config.ACCESS_TOKEN_EXPIRY_SECONDS,
     },
   }
 }
@@ -351,7 +353,7 @@ export async function forgotPassword(
   logger.info({ userId: user._id.toString(), email }, "forgot_password_email_sent")
 
   // Send email with reset link
-  const resetLink = `${config.FRONTEND_URL}/auth/reset-password?token=${token}&email=${encodeURIComponent(email)}`
+  const resetLink = `${config.FRONTEND_URL}/reset-password?token=${token}&email=${encodeURIComponent(email)}`
 
   await sendEmail({
     to: email,

@@ -69,12 +69,14 @@ export const config = {
   // module is battle-tested.
   WITHDRAWAL_MIN_PAISE: Number(env("WITHDRAWAL_MIN_PAISE", "10000")),
 
-  // Token durations
-  ACCESS_TOKEN_EXPIRY: "7d",
-  ACCESS_TOKEN_EXPIRY_SECONDS: 7 * 24 * 60 * 60, // 7 days in seconds
-  ACCESS_TOKEN_EXPIRY_MS: 7 * 24 * 60 * 60 * 1000, // 7 days in ms (for cookie maxAge)
+  // Token durations — AI_rules §D: short-lived access (15 min), longer-lived
+  // refresh (7 days), rotated on every use. Clients must call POST /auth/refresh
+  // on 401 and retry; both first-party apps do this transparently.
+  ACCESS_TOKEN_EXPIRY: "15m",
+  ACCESS_TOKEN_EXPIRY_SECONDS: 15 * 60, // 15 minutes in seconds
+  ACCESS_TOKEN_EXPIRY_MS: 15 * 60 * 1000, // 15 minutes in ms (for cookie maxAge)
 
-  REFRESH_TOKEN_EXPIRY: "30d",
-  REFRESH_TOKEN_EXPIRY_SECONDS: 30 * 24 * 60 * 60, // 30 days in seconds
-  REFRESH_TOKEN_EXPIRY_MS: 30 * 24 * 60 * 60 * 1000, // 30 days in ms (for cookie maxAge)
+  REFRESH_TOKEN_EXPIRY: "7d",
+  REFRESH_TOKEN_EXPIRY_SECONDS: 7 * 24 * 60 * 60, // 7 days in seconds
+  REFRESH_TOKEN_EXPIRY_MS: 7 * 24 * 60 * 60 * 1000, // 7 days in ms (for cookie maxAge)
 } as const

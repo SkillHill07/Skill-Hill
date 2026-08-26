@@ -6,15 +6,15 @@ import {
   SUBMISSION_STATUS_LABELS,
 } from "@/lib/format"
 
-const contestTones: Record<string, "neutral" | "green" | "amber" | "red" | "blue" | "violet"> = {
+const contestTones: Record<string, "neutral" | "green" | "amber" | "red" | "blue" | "teal"> = {
   draft: "neutral",
   active: "green",
   frozen: "blue",
-  settled: "violet",
+  settled: "teal",
   cancelled: "red",
 }
 
-const submissionTones: Record<string, "neutral" | "green" | "amber" | "red" | "blue" | "violet"> = {
+const submissionTones: Record<string, "neutral" | "green" | "amber" | "red" | "blue" | "teal"> = {
   pending: "amber",
   running: "blue",
   accepted: "green",
@@ -23,7 +23,7 @@ const submissionTones: Record<string, "neutral" | "green" | "amber" | "red" | "b
   timeout: "amber",
 }
 
-const paymentTones: Record<string, "neutral" | "green" | "amber" | "red" | "blue" | "violet"> = {
+const paymentTones: Record<string, "neutral" | "green" | "amber" | "red" | "blue" | "teal"> = {
   created: "neutral",
   attempted: "blue",
   paid: "green",
@@ -31,7 +31,7 @@ const paymentTones: Record<string, "neutral" | "green" | "amber" | "red" | "blue
   refunded: "amber",
 }
 
-const prizeTones: Record<string, "neutral" | "green" | "amber" | "red" | "blue" | "violet"> = {
+const prizeTones: Record<string, "neutral" | "green" | "amber" | "red" | "blue" | "teal"> = {
   pending: "amber",
   credited: "green",
   failed: "red",

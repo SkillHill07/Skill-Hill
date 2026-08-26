@@ -1,10 +1,17 @@
 import { Router } from "express"
 import type { Request, Response, NextFunction } from "express"
-import { getGithubAuthUrl, handleGithubCallback, linkGithubAccount } from "../services/auth-github.service.js"
+import {
+  getGithubAuthUrl,
+  handleGithubCallback,
+  linkGithubAccount,
+  createGithubOAuthState,
+  consumeGithubOAuthState,
+} from "../services/auth-github.service.js"
 import { authenticate } from "../middleware/auth.middleware.js"
 import { config } from "../../../config/index.js"
 import { sendError, sendSuccess } from "../../../utils/response.js"
 import { setAuthCookies } from "../../../utils/cookies.js"
+import { logger } from "../../../utils/logger.js"
 
 export const githubAuthRouter: Router = Router()
 
@@ -22,12 +29,13 @@ const NOT_CONFIGURED = "GitHub OAuth is not configured. Set GITHUB_CLIENT_ID and
  *       503:
  *         description: GitHub OAuth not configured
  */
-githubAuthRouter.get("/", (_req: Request, res: Response) => {
+githubAuthRouter.get("/", async (_req: Request, res: Response) => {
   if (!config.GITHUB_CLIENT_ID) {
     res.status(503).json({ success: false, error: NOT_CONFIGURED })
     return
   }
-  res.redirect(getGithubAuthUrl())
+  const state = await createGithubOAuthState()
+  res.redirect(getGithubAuthUrl(state))
 })
 
 /**
@@ -53,9 +61,16 @@ githubAuthRouter.get("/", (_req: Request, res: Response) => {
  */
 githubAuthRouter.get("/callback", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { code, error: ghError } = req.query
+    const { code, state, error: ghError } = req.query
+    const frontendUrl = config.FRONTEND_URL
     if (ghError) {
-      res.redirect(`${config.FRONTEND_URL}/auth/callback?error=${encodeURIComponent("GitHub sign-in was cancelled")}`)
+      res.redirect(`${frontendUrl}/auth/callback?error=${encodeURIComponent("GitHub sign-in was cancelled")}`)
+      return
+    }
+    // CSRF protection: state must be a value we issued and not yet consumed
+    if (typeof state !== "string" || !(await consumeGithubOAuthState(state))) {
+      logger.warn("github_oauth_failed: invalid_state")
+      res.redirect(`${frontendUrl}/auth/callback?error=${encodeURIComponent("Sign-in session expired. Please try again.")}`)
       return
     }
     if (!code || typeof code !== "string") {
@@ -65,7 +80,7 @@ githubAuthRouter.get("/callback", async (req: Request, res: Response, next: Next
     const { tokens, isNewUser } = await handleGithubCallback(code)
     setAuthCookies(res, tokens.accessToken, tokens.refreshToken)
     res.redirect(
-      `${config.FRONTEND_URL}/auth/callback?isNewUser=${isNewUser}`,
+      `${frontendUrl}/auth/callback?isNewUser=${isNewUser}`,
     )
   } catch (err) {
     next(err)
@@ -128,10 +143,11 @@ githubAuthRouter.post("/link", authenticate, async (req: Request, res: Response,
  *       503:
  *         description: GitHub OAuth not configured
  */
-githubAuthRouter.get("/url", (_req: Request, res: Response) => {
+githubAuthRouter.get("/url", async (_req: Request, res: Response) => {
   if (!config.GITHUB_CLIENT_ID) {
     res.status(503).json({ success: false, error: NOT_CONFIGURED })
     return
   }
-  sendSuccess(res, { url: getGithubAuthUrl() })
+  const state = await createGithubOAuthState()
+  sendSuccess(res, { url: getGithubAuthUrl(state) })
 })

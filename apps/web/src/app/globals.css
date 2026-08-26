@@ -3,6 +3,8 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
   --color-card: hsl(var(--card));
@@ -84,4 +86,21 @@
 
 .animate-marquee-reverse {
   animation: marquee var(--marquee-duration, 30s) linear infinite reverse;
+}
+
+/* Accessibility: respect users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee,
+  .animate-marquee-reverse {
+    animation-play-state: paused;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

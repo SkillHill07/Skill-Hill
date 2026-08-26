@@ -11,6 +11,7 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   setPasswordSchema,
+  updateProfileFieldsSchema,
 } from "../auth.validators.js"
 import { validateRequest } from "../../../middlewares/validate-request.js"
 import {
@@ -77,8 +78,9 @@ export const authRouter: Router = Router()
  *                       properties:
  *                         user:
  *                           $ref: "#/components/schemas/User"
- *                         tokens:
- *                           $ref: "#/components/schemas/AuthTokens"
+ *                         expiresInSeconds:
+ *                           type: number
+ *                           description: Access token lifetime in seconds. Tokens are NOT returned in the body - sessions are delivered via HttpOnly cookies.
  *       400:
  *         description: Validation error or Turnstile failed
  *         content:
@@ -96,7 +98,12 @@ authRouter.post(
     try {
       const { user, tokens } = await authService.registerUser(req.body)
       setAuthCookies(res, tokens.accessToken, tokens.refreshToken)
-      sendSuccess(res, { user, tokens }, "Registration successful", 201)
+      sendSuccess(
+        res,
+        { user, expiresIn: tokens.expiresIn },
+        "Registration successful",
+        201,
+      )
     } catch (err) {
       next(err)
     }
@@ -145,8 +152,9 @@ authRouter.post(
  *                       properties:
  *                         user:
  *                           $ref: "#/components/schemas/User"
- *                         tokens:
- *                           $ref: "#/components/schemas/AuthTokens"
+ *                         expiresInSeconds:
+ *                           type: number
+ *                           description: Access token lifetime in seconds. Tokens are NOT returned in the body - sessions are delivered via HttpOnly cookies.
  *       401:
  *         description: Invalid credentials
  *       403:
@@ -160,7 +168,7 @@ authRouter.post(
     try {
       const { user, tokens } = await authService.loginUser(req.body)
       setAuthCookies(res, tokens.accessToken, tokens.refreshToken)
-      sendSuccess(res, { user, tokens }, "Login successful")
+      sendSuccess(res, { user, expiresIn: tokens.expiresIn }, "Login successful")
     } catch (err) {
       next(err)
     }
@@ -199,8 +207,9 @@ authRouter.post(
  *                       properties:
  *                         user:
  *                           $ref: "#/components/schemas/User"
- *                         tokens:
- *                           $ref: "#/components/schemas/AuthTokens"
+ *                         expiresInSeconds:
+ *                           type: number
+ *                           description: Access token lifetime in seconds. Tokens are NOT returned in the body - sessions are delivered via HttpOnly cookies.
  *       401:
  *         description: Invalid or expired refresh token
  */
@@ -217,7 +226,7 @@ authRouter.post(
       }
       const { user, tokens } = await authService.refreshTokens(refreshToken)
       setAuthCookies(res, tokens.accessToken, tokens.refreshToken)
-      sendSuccess(res, { user, tokens }, "Tokens refreshed")
+      sendSuccess(res, { user, expiresIn: tokens.expiresIn }, "Tokens refreshed")
     } catch (err) {
       next(err)
     }
@@ -381,10 +390,25 @@ authRouter.put(
         updateFields.avatarUrl = avatarUrl
       }
 
-      const user = await authService.updateProfile(
-        userId,
-        updateFields as Parameters<typeof authService.updateProfile>[1],
-      )
+      // Zod validation at the boundary (AI_rules §D) — multipart fields are
+      // strings, so the parsed object is validated after assembly.
+      const parsed = updateProfileFieldsSchema.safeParse(updateFields)
+      if (!parsed.success) {
+        const issue = parsed.error.errors[0]
+        sendError(
+          res,
+          `Validation failed: ${issue?.path.join(".") ?? "field"} — ${issue?.message ?? "invalid input"}`,
+          400,
+          undefined,
+          "VALIDATION_ERROR",
+        )
+        return
+      }
+
+      const user = await authService.updateProfile(userId, {
+        ...parsed.data,
+        avatarUrl: updateFields.avatarUrl as string | undefined,
+      })
       sendSuccess(res, user, "Profile updated successfully")
     } catch (err) {
       next(err)

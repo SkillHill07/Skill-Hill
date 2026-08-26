@@ -11,17 +11,17 @@ Skill-based coding contest platform. Users pay ₹20 to join a contest and win a
 
 # Authentication
 
-Tokens are stored in **HttpOnly, Secure (prod), SameSite=Lax cookies** and also returned in the response body for backward compatibility.
+Tokens are stored in **HttpOnly, Secure (prod), SameSite=Lax cookies** and are never returned in the response body. Clients must send credentials with every request.
 
-- **Access token**: 7 days (stored in \`accessToken\` cookie + response body)
-- **Refresh token**: 30 days (stored in \`refreshToken\` cookie + response body, rotated on use)
+- **Access token**: 15 minutes (stored in \`accessToken\` cookie). Clients should call \`POST /auth/refresh\` on 401 and retry.
+- **Refresh token**: 7 days (stored in \`refreshToken\` cookie, single-use — rotated on every refresh; reuse triggers full revocation)
 
 ## Email/Password Auth
 | Method | Path | Auth | Rate Limit | Description |
 |--------|------|------|------------|-------------|
 | POST | /auth/register | No | 3/min | Register with email + password + Turnstile |
 | POST | /auth/login | No | 5/min | Login with email + password + Turnstile |
-| POST | /auth/refresh | No | 10/min | Refresh tokens (reads from cookie or body) |
+| POST | /auth/refresh | No | 10/min | Refresh tokens (reads from refresh cookie) |
 | POST | /auth/logout | Yes | — | Logout, clear cookies, revoke refresh token |
 | GET | /auth/me | Yes | — | Get current user profile |
 | PUT | /auth/me | Yes | — | Update profile (multipart, optional avatar upload) |
@@ -207,14 +207,15 @@ submissions:
 | submission:completed | submissionId, contestId, problemId, status + result fields | Judging finished (public results only) |
 
 # Key Security Features
-- **JWT**: 7-day access tokens, 30-day refresh tokens with rotation (set as HttpOnly cookies)
+- **JWT**: 15-minute access tokens, 7-day refresh tokens with single-use rotation and reuse detection (set as HttpOnly cookies, never in response bodies)
 - **Redis**: Refresh token revocation, OTP storage, rate limiting cooldown (Upstash Redis via REST)
-- **Turnstile**: CAPTCHA verification on register, login, forgot-password
+- **Turnstile**: CAPTCHA verification on register, login, forgot-password, contest-join, withdrawal
+- **OAuth CSRF protection**: one-time signed state values on Google/GitHub flows; banned/flagged accounts are blocked at OAuth login
 - **Encryption**: KYC fields (PAN, bank account, IFSC, UPI) encrypted at rest using AES-256-GCM
 - **Payments**: Razorpay orders with webhook-only capture confirmation (HMAC-verified raw body), idempotent wallet deposits, RazorpayX UPI payouts for withdrawals
-- **Rate Limiting**: Per-IP rate limiting on auth-sensitive endpoints (fixed-window counters on Upstash Redis)
+- **Rate Limiting**: Per-IP / per-user rate limiting on auth-sensitive endpoints including withdrawals (fixed-window counters on Upstash Redis)
 - **Email Enumeration Prevention**: Forgot-password always returns success
-- **Session Revocation**: Password reset, account ban/flag, and logout revoke all active sessions
+- **Session Revocation**: Password reset, account ban/flag, role change, account delete, refresh-token reuse, and logout revoke all active sessions
 - **Image Upload**: Avatars (400x400), language logos (256x256), problem images, and site logo/banner images compressed to WebP via Sharp, uploaded to Cloudflare R2, max 5MB
 - **Social Login**: Google and GitHub OAuth with account linking support
       `,

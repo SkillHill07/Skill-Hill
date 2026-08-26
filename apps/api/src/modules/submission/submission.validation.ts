@@ -3,28 +3,31 @@ import { SUBMISSION_STATUSES } from "@skillcontest/shared-types"
 
 export const createSubmissionSchema = z.object({
   params: z.object({
-    contestId: z.string().min(1, "Contest id is required"),
+    contestId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid contest id"),
   }),
   body: z.object({
-    problemId: z.string().min(1, "Problem id is required"),
+    problemId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid problem id"),
     // Required for coding problems; ignored/absent for mcq (the answer index
     // goes in `code`).
     language: z.string().min(1, "Language key is required").max(50).optional(),
     // For coding: the source code. For mcq: the chosen option index as string.
     code: z.string().min(1, "Code is required").max(200000, "Code is too long"),
+    // "run" judges public test cases only and never touches the leaderboard;
+    // "submit" is the full scored judge. Defaults to "submit".
+    mode: z.enum(["run", "submit"]).default("submit"),
   }),
 })
 
 export const listSubmissionsSchema = z.object({
   params: z.object({
-    contestId: z.string().min(1, "Contest id is required"),
+    contestId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid contest id"),
   }),
 })
 
 export const getSubmissionSchema = z.object({
   params: z.object({
-    contestId: z.string().min(1, "Contest id is required"),
-    submissionId: z.string().min(1, "Submission id is required"),
+    contestId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid contest id"),
+    submissionId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid submission id"),
   }),
 })
 
@@ -35,7 +38,7 @@ export const getSubmissionSchema = z.object({
  */
 export const adminListSubmissionsSchema = z.object({
   params: z.object({
-    contestId: z.string().min(1, "Contest id is required"),
+    contestId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid contest id"),
   }),
   query: z.object({
     status: z.enum(SUBMISSION_STATUSES).optional(),

@@ -1,4 +1,6 @@
+import crypto from "crypto"
 import { config } from "../../../config/index.js"
+import { redis } from "../../../config/redis.js"
 import { User, type IUser } from "../auth.schema.js"
 import type { AuthTokens } from "@skillcontest/shared-types"
 import {
@@ -17,6 +19,25 @@ const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 
 const SCOPES = ["openid", "email", "profile"]
 
+// CSRF protection: one-time state values with a 10-minute TTL.
+const OAUTH_STATE_TTL_SECONDS = 600
+const OAUTH_STATE_PREFIX = "oauth:state:google:"
+
+export function assertAccountStatus(user: IUser): void {
+  if (user.accountStatus === "banned") {
+    throw Object.assign(
+      new Error("Your account has been banned. Please contact support."),
+      { status: 403, code: "ACCOUNT_BANNED" },
+    )
+  }
+  if (user.accountStatus === "flagged") {
+    throw Object.assign(
+      new Error("Your account is under review. Please contact support."),
+      { status: 403, code: "ACCOUNT_FLAGGED" },
+    )
+  }
+}
+
 interface GoogleTokens {
   access_token: string
   id_token: string
@@ -34,9 +55,30 @@ interface GoogleUserInfo {
 }
 
 /**
+ * Create and persist a one-time CSRF state value for the OAuth flow.
+ */
+export async function createOAuthState(): Promise<string> {
+  const state = crypto.randomBytes(16).toString("hex")
+  await redis.set(`${OAUTH_STATE_PREFIX}${state}`, "1", {
+    ex: OAUTH_STATE_TTL_SECONDS,
+  })
+  return state
+}
+
+/**
+ * Verify and consume a one-time CSRF state value. Returns false when the
+ * state is missing, expired, or already used.
+ */
+export async function consumeOAuthState(state: string): Promise<boolean> {
+  if (!state) return false
+  const deleted = await redis.del(`${OAUTH_STATE_PREFIX}${state}`)
+  return deleted > 0
+}
+
+/**
  * Generate the Google OAuth consent URL to redirect users to.
  */
-export function getGoogleAuthUrl(): string {
+export function getGoogleAuthUrl(state?: string): string {
   const params = new URLSearchParams({
     client_id: config.GOOGLE_CLIENT_ID,
     redirect_uri: config.GOOGLE_CALLBACK_URL,
@@ -45,6 +87,7 @@ export function getGoogleAuthUrl(): string {
     access_type: "offline",
     prompt: "consent",
   })
+  if (state) params.set("state", state)
 
   return `${GOOGLE_AUTH_URL}?${params.toString()}`
 }
@@ -114,14 +157,18 @@ export async function handleGoogleCallback(
   // Get user info
   const googleUser = await getUserInfo(googleTokens.access_token)
 
-  // Check if user already exists by googleId or email
+  // Check if user already exists by googleId or email.
+  // +refreshTokens: the field is select:false and we push to it below.
   let user = await User.findOne({
     $or: [{ googleId: googleUser.sub }, { email: googleUser.email }],
-  })
+  }).select("+refreshTokens")
 
   let isNewUser = false
 
   if (user) {
+    // Banned/flagged accounts must never regain access via OAuth
+    assertAccountStatus(user)
+
     // Existing user — link googleId if not already linked
     if (!user.googleId) {
       user.googleId = googleUser.sub

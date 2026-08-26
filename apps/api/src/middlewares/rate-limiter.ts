@@ -177,5 +177,20 @@ export const joinLimiter = createMiddleware(
   (req) => req.user?.userId ?? req.ip ?? "unknown",
 )
 
+/**
+ * Rate limiter for withdrawal requests.
+ * 3 attempts per user per 5 minute window (money-moving endpoint).
+ * Must be placed AFTER the `authenticate` middleware so req.user is set.
+ */
+export const withdrawLimiter = createMiddleware(
+  new RedisRateLimiter({
+    keyPrefix: "rl:withdraw:",
+    points: 3,
+    duration: 300,
+  }),
+  "Too many withdrawal requests. Please try again in a few minutes.",
+  (req) => req.user?.userId ?? req.ip ?? "unknown",
+)
+
 // Submission rate limiting (1 per 30s per problem) lands with the submission
 // module in Phase 4 — reusing this middleware factory there.

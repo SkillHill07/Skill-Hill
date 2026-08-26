@@ -31,7 +31,7 @@ export function SectionHeading({
       )}
     >
       {eyebrow && (
-        <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+        <p className="text-xs font-semibold uppercase tracking-widest text-orange-600 dark:text-orange-400">
           {eyebrow}
         </p>
       )}
@@ -180,7 +180,7 @@ export function Avatar({
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-indigo-600 font-bold text-white",
+        "inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-orange-600 font-bold text-white",
         avatarSizes[size],
         className,
       )}

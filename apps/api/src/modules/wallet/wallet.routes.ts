@@ -4,6 +4,8 @@ import { initiatePayout } from "../payment/payout.service.js"
 import { paymentService } from "../payment/payment.service.js"
 import { authenticate } from "../auth/middleware/auth.middleware.js"
 import { validateRequest } from "../../middlewares/validate-request.js"
+import { withdrawLimiter } from "../../middlewares/rate-limiter.js"
+import { verifyTurnstile } from "../../utils/turnstile.js"
 import { sendSuccess, sendError } from "../../utils/response.js"
 import {
   balanceSchema,
@@ -152,7 +154,7 @@ walletRouter.post(
  *         application/json:
  *           schema:
  *             type: object
- *             required: [amount]
+ *             required: [amount, turnstileToken]
  *             properties:
  *               amount:
  *                 type: integer
@@ -160,6 +162,9 @@ walletRouter.post(
  *               upiId:
  *                 type: string
  *                 description: Optional UPI id (defaults to the verified KYC UPI id)
+ *               turnstileToken:
+ *                 type: string
+ *                 description: Cloudflare Turnstile verification token
  *     responses:
  *       201:
  *         description: Withdrawal requested (pending payout)
@@ -172,6 +177,7 @@ walletRouter.post(
  */
 walletRouter.post(
   "/withdraw",
+  withdrawLimiter,
   validateRequest(withdrawSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     // Fast-fail before any ledger mutation: without the RazorpayX payout
@@ -189,6 +195,18 @@ walletRouter.post(
       return
     }
     try {
+      // AI_rules §D: Turnstile required on withdrawal requests.
+      const turnstileValid = await verifyTurnstile(req.body.turnstileToken)
+      if (!turnstileValid) {
+        sendError(
+          res,
+          "Human verification failed. Please complete the verification and try again.",
+          400,
+          undefined,
+          "TURNSTILE_FAILED",
+        )
+        return
+      }
       const tx = await walletService.withdraw(req.user!.userId, req.body.amount, {
         upiId: req.body.upiId,
         payout: initiatePayout,

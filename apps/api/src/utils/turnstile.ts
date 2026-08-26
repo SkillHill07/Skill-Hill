@@ -8,7 +8,10 @@ import { logger } from "./logger.js"
  * Always passes in development/test environments.
  */
 export async function verifyTurnstile(token: string): Promise<boolean> {
+  // Dev/test bypass: no CAPTCHA while developing or testing. Controlled
+  // purely by NODE_ENV — production builds always hit the real siteverify.
   if (config.NODE_ENV === "development" || config.NODE_ENV === "test") {
+    logger.debug("turnstile_skipped: development bypass")
     return true
   }
 

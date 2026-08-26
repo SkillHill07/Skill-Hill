@@ -1,25 +1,78 @@
 import type { Metadata } from "next"
+import { Inter, JetBrains_Mono } from "next/font/google"
 import { Providers } from "@/components/providers"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
 import "./globals.css"
 
+/**
+ * Typography — AI_rules/design system:
+ * - Inter: primary UI face (geometric-humanist, excellent at small sizes)
+ * - JetBrains Mono: code/editor surfaces
+ */
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+})
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+})
+
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+
 export const metadata: Metadata = {
-  title: "SkillHill",
-  description: "Skill-based coding contests — pay ₹20, compete, win prizes.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "SkillHill — ₹20 coding contests, real cash prizes",
+    template: "%s · SkillHill",
+  },
+  description:
+    "Join skill-based coding contests for ₹20. Solve problems against the clock, climb live leaderboards, and win prize money credited to your wallet.",
+  keywords: [
+    "coding contest",
+    "competitive programming",
+    "coding competition India",
+    "win money coding",
+    "programming challenge",
+  ],
+  openGraph: {
+    type: "website",
+    siteName: "SkillHill",
+    title: "SkillHill — ₹20 coding contests, real cash prizes",
+    description:
+      "Skill-based coding contests. Pay ₹20 to enter, compete on live leaderboards, win prize money.",
+    url: SITE_URL,
+    locale: "en_IN",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SkillHill — ₹20 coding contests, real cash prizes",
+    description:
+      "Skill-based coding contests. Pay ₹20 to enter, compete on live leaderboards, win prize money.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
+  // Applies the persisted/system theme before first paint to avoid a flash
+  // of the wrong scheme. Kept tiny and dependency-free.
+  const themeInit = `try{var t=localStorage.getItem("theme");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme: dark)").matches)){document.documentElement.classList.add("dark")}}catch(e){}`
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInit }} />
+      </head>
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
-        <Providers>
-          <div className="flex min-h-screen flex-col">
-            <Navbar />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   )
