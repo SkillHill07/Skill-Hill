@@ -253,6 +253,102 @@ async function main(): Promise<void> {
   settledContest.problemIds = [settledProblems[0]._id]
   await settledContest.save()
 
+  // ------------------------------------------------- freePractice problems
+  const freeProblems = await Problem.create([
+    {
+      title: "FizzBuzz",
+      slug: "fizzbuzz",
+      contestId: freePractice._id,
+      type: "coding",
+      difficulty: "easy",
+      points: 25,
+      timeLimit: 1000,
+      memoryLimit: 128,
+      languageSupport: ["javascript", "python", "cpp"],
+      solutionTemplate: {
+        javascript:
+          "function main() {\n  const n = parseInt(require('fs').readFileSync(0, 'utf8').trim());\n  for (let i = 1; i <= n; i++) {\n    if (i % 15 === 0) console.log('FizzBuzz');\n    else if (i % 3 === 0) console.log('Fizz');\n    else if (i % 5 === 0) console.log('Buzz');\n    else console.log(i);\n  }\n}\nmain();\n",
+        python:
+          "def main():\n    n = int(input())\n    for i in range(1, n + 1):\n        if i % 15 == 0: print('FizzBuzz')\n        elif i % 3 == 0: print('Fizz')\n        elif i % 5 == 0: print('Buzz')\n        else: print(i)\n\nmain()\n",
+      },
+      description:
+        "Print numbers from 1 to n. For multiples of 3 print 'Fizz', for multiples of 5 print 'Buzz', for multiples of both print 'FizzBuzz'. Otherwise print the number.\n\nInput: One integer n.\nOutput: n lines, one per number.",
+      options: [],
+      correctAnswer: null,
+      testCases: [
+        { input: "5", expectedOutput: "1\n2\nFizz\n4\nBuzz", isPublic: true },
+        { input: "15", expectedOutput: "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz", isPublic: false },
+      ],
+      imageUrls: [],
+    },
+    {
+      title: "Palindrome Check",
+      slug: "palindrome-check",
+      contestId: freePractice._id,
+      type: "coding",
+      difficulty: "easy",
+      points: 25,
+      timeLimit: 1000,
+      memoryLimit: 128,
+      languageSupport: ["javascript", "python", "cpp"],
+      solutionTemplate: {},
+      description:
+        "Check if a given string is a palindrome (reads the same forwards and backwards). Ignore case.\n\nInput: A single string.\nOutput: 'true' if palindrome, 'false' otherwise.",
+      options: [],
+      correctAnswer: null,
+      testCases: [
+        { input: "racecar", expectedOutput: "true", isPublic: true },
+        { input: "hello", expectedOutput: "false", isPublic: true },
+        { input: "Madam", expectedOutput: "true", isPublic: false },
+      ],
+      imageUrls: [],
+    },
+    {
+      title: "Max Subarray Sum",
+      slug: "max-subarray-sum",
+      contestId: freePractice._id,
+      type: "coding",
+      difficulty: "medium",
+      points: 50,
+      timeLimit: 2000,
+      memoryLimit: 256,
+      languageSupport: ["javascript", "python", "cpp"],
+      solutionTemplate: {},
+      description:
+        "Given an array of integers, find the contiguous subarray with the largest sum and return that sum.\n\nInput: First line n, second line n integers.\nOutput: The maximum subarray sum.",
+      options: [],
+      correctAnswer: null,
+      testCases: [
+        { input: "5\n-2 1 -3 4 -1", expectedOutput: "6", isPublic: true },
+        { input: "3\n1 2 3", expectedOutput: "6", isPublic: false },
+      ],
+      imageUrls: [],
+    },
+    {
+      title: "Binary Search",
+      slug: "binary-search",
+      contestId: freePractice._id,
+      type: "coding",
+      difficulty: "medium",
+      points: 50,
+      timeLimit: 1500,
+      memoryLimit: 128,
+      languageSupport: ["javascript", "python", "cpp"],
+      solutionTemplate: {},
+      description:
+        "Implement binary search. Given a sorted array and a target value, return the index of the target. Return -1 if not found.\n\nInput: First line n and target, second line n sorted integers.\nOutput: Index of target or -1.",
+      options: [],
+      correctAnswer: null,
+      testCases: [
+        { input: "5 3\n1 2 3 4 5", expectedOutput: "2", isPublic: true },
+        { input: "5 6\n1 2 3 4 5", expectedOutput: "-1", isPublic: false },
+      ],
+      imageUrls: [],
+    },
+  ])
+  freePractice.problemIds = freeProblems.map((p) => p._id)
+  await freePractice.save()
+
   // ----------------------------------------------------------- participation
   const players = [
     users["riya@skillhill.dev"],

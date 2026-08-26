@@ -10,8 +10,10 @@ import {
   Clock3,
   Code2,
   Crown,
+  ChevronRight,
   Rocket,
   Sparkles,
+  Terminal,
   Trophy,
   Users,
   Wallet,
@@ -191,15 +193,33 @@ export default function HomePage() {
     <div className="overflow-x-clip">
       {/* ============================== Hero ============================== */}
       <section className="relative mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 pb-16 pt-16 text-center sm:pt-24">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-1.5 text-sm text-muted-foreground"
-        >
-          <Sparkles className="h-4 w-4 text-orange-500" aria-hidden />
-          {logo?.tagline ?? "Skill-based coding contests"}
-        </motion.div>
+        {/* Live pulse */}
+        {contests && contests.contests.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+            className="flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-sm font-medium text-orange-700 dark:border-orange-800 dark:bg-orange-950/50 dark:text-orange-300"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-orange-500" />
+            </span>
+            {contests.contests.length} contest{contests.contests.length > 1 ? "s" : ""} live now
+          </motion.div>
+        )}
+
+        {!contests && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-1.5 text-sm text-muted-foreground"
+          >
+            <Sparkles className="h-4 w-4 text-orange-500" aria-hidden />
+            {logo?.tagline ?? "Skill-based coding contests"}
+          </motion.div>
+        )}
 
         <motion.h1
           initial={{ opacity: 0, y: 24 }}
@@ -244,27 +264,36 @@ export default function HomePage() {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="mt-4 grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3"
           >
-            <Card className="p-5">
+            <Card className="relative overflow-hidden p-5">
+              <div className="absolute -right-3 -top-3 flex h-10 w-10 items-center justify-center rounded-full bg-orange-600/10 text-orange-600 dark:text-orange-400">
+                <Trophy className="h-5 w-5" aria-hidden />
+              </div>
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Contests hosted
               </p>
-              <p className="mt-1 text-2xl font-bold tracking-tight">
+              <p className="mt-1 text-3xl font-extrabold tabular-nums tracking-tight">
                 <Countup value={contests.total} />
               </p>
             </Card>
-            <Card className="p-5">
+            <Card className="relative overflow-hidden p-5">
+              <div className="absolute -right-3 -top-3 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600/10 text-emerald-600 dark:text-emerald-400">
+                <Wallet className="h-5 w-5" aria-hidden />
+              </div>
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Live prize pool
               </p>
-              <p className="mt-1 text-2xl font-bold tracking-tight">
+              <p className="mt-1 text-3xl font-extrabold tabular-nums tracking-tight text-emerald-600 dark:text-emerald-400">
                 <Countup value={prizePool} format={(n) => inr(Math.round(n))} />
               </p>
             </Card>
-            <Card className="p-5">
+            <Card className="relative overflow-hidden p-5">
+              <div className="absolute -right-3 -top-3 flex h-10 w-10 items-center justify-center rounded-full bg-blue-600/10 text-blue-600 dark:text-blue-400">
+                <Code2 className="h-5 w-5" aria-hidden />
+              </div>
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Entry fee
               </p>
-              <p className="mt-1 text-2xl font-bold tracking-tight">{inr(2000)}</p>
+              <p className="mt-1 text-3xl font-extrabold tabular-nums tracking-tight">{inr(2000)}</p>
             </Card>
           </motion.div>
         )}
@@ -369,14 +398,16 @@ export default function HomePage() {
               <Reveal as="li" key={step.title} delay={i * 0.08}>
                 <Card className="relative h-full">
                   <CardContent className="flex h-full flex-col gap-3 p-5">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-600 text-white">
-                      {step.icon}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-600 text-white font-bold text-sm tabular-nums">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      {i < steps.length - 1 && (
+                        <ChevronRight className="hidden h-4 w-4 text-muted-foreground lg:block" aria-hidden />
+                      )}
+                    </div>
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-widest text-orange-600 dark:text-orange-400">
-                        Step {i + 1}
-                      </p>
-                      <h3 className="mt-1 font-semibold">{step.title}</h3>
+                      <h3 className="font-semibold">{step.title}</h3>
                       <p className="mt-1 text-sm text-muted-foreground">{step.text}</p>
                     </div>
                   </CardContent>
@@ -432,16 +463,18 @@ export default function HomePage() {
           <SectionHeading
             eyebrow="Practice library"
             title="Sharpen your edge, free"
-            description="Hundreds of problems from past contests and open practice sets — no entry fee, no timer pressure."
+            description="Problems from past contests and open practice sets — no entry fee, no timer pressure."
           />
           <div className="mt-8 grid gap-4 sm:grid-cols-3">
             {difficultyCards.map((d, i) => (
               <Reveal key={d.label} delay={i * 0.08}>
                 <Link href={`/problems?difficulty=${d.label.toLowerCase()}`} className="group block h-full">
-                  <Card className={`h-full border bg-card transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-md ${d.tone}`}>
+                  <Card className={`relative h-full border bg-card transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-md ${d.tone}`}>
                     <CardContent className="flex h-full flex-col gap-2 p-5">
                       <div className="flex items-center justify-between">
-                        <Code2 className="h-5 w-5" aria-hidden />
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                          <Code2 className="h-4 w-4" aria-hidden />
+                        </span>
                         <Badge tone={d.label === "Easy" ? "green" : d.label === "Medium" ? "amber" : "red"}>
                           {d.label}
                         </Badge>
@@ -452,6 +485,12 @@ export default function HomePage() {
                         Start practicing <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                       </span>
                     </CardContent>
+                    {/* Subtle code decoration */}
+                    <div className="pointer-events-none absolute bottom-2 right-3 font-mono text-[10px] leading-tight text-muted-foreground/30">
+                      {d.label === "Easy" && "for (let i = 0;)"}
+                      {d.label === "Medium" && "dp[i] = Math.max()"}
+                      {d.label === "Hard" && "while (queue.length)"}
+                    </div>
                   </Card>
                 </Link>
               </Reveal>
@@ -485,6 +524,28 @@ export default function HomePage() {
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-700 via-orange-600 to-amber-600 px-6 py-14 text-center text-white sm:px-12">
             <div className="pointer-events-none absolute -left-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-2xl" />
             <div className="pointer-events-none absolute -bottom-20 -right-10 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+
+            {/* Mini workspace preview */}
+            <div className="mx-auto mb-8 max-w-lg overflow-hidden rounded-xl border border-white/20 bg-black/30 text-left shadow-2xl backdrop-blur-sm">
+              <div className="flex items-center gap-1.5 border-b border-white/10 px-3 py-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-red-400/80" />
+                <span className="h-2.5 w-2.5 rounded-full bg-yellow-400/80" />
+                <span className="h-2.5 w-2.5 rounded-full bg-green-400/80" />
+                <span className="ml-2 text-xs text-white/50">workspace — Two Sum</span>
+              </div>
+              <div className="p-4 font-mono text-xs leading-relaxed text-white/80">
+                <p><span className="text-orange-300">function</span> <span className="text-yellow-200">solve</span>(nums, target) {'{'}</p>
+                <p className="pl-4"><span className="text-orange-300">const</span> map = <span className="text-orange-300">new</span> Map();</p>
+                <p className="pl-4"><span className="text-orange-300">for</span> (<span className="text-orange-300">let</span> i = <span className="text-emerald-300">0</span>; i {'<'} nums.length; i++) {'{'}</p>
+                <p className="pl-8"><span className="text-orange-300">const</span> j = map.<span className="text-yellow-200">get</span>(target - nums[i]);</p>
+                <p className="pl-8"><span className="text-orange-300">if</span> (j !== <span className="text-orange-300">undefined</span>) <span className="text-orange-300">return</span> [j, i];</p>
+                <p className="pl-8">map.<span className="text-yellow-200">set</span>(nums[i], i);</p>
+                <p className="pl-4">{'}'}</p>
+                <p>{'}'}</p>
+                <p className="mt-2 text-emerald-300">{'>'} Accepted — 42ms · 14.2 MB</p>
+              </div>
+            </div>
+
             <Rocket className="mx-auto h-10 w-10" aria-hidden />
             <h2 className="mx-auto mt-4 max-w-xl text-3xl font-extrabold tracking-tight">
               Your first win is one contest away

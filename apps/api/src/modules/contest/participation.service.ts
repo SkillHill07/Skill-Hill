@@ -44,6 +44,13 @@ async function joinContest(
     })
   }
 
+  if (!contest.problemIds || contest.problemIds.length === 0) {
+    throw Object.assign(new Error("This contest has no published problems yet"), {
+      status: 400,
+      code: "NO_PROBLEMS",
+    })
+  }
+
   const existing = await Participation.findOne({ userId, contestId })
   if (existing) {
     throw Object.assign(new Error("You have already joined this contest"), {
