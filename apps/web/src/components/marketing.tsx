@@ -222,7 +222,7 @@ export function Accordion({ items, className }: { items: AccordionItem[]; classN
               type="button"
               aria-expanded={isOpen}
               onClick={() => setOpen(isOpen ? null : item.id)}
-              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+              className="flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-4 text-left"
             >
               <span className="font-semibold">{item.question}</span>
               <motion.span

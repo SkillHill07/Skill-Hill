@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { Suspense, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Github, LogIn } from "lucide-react"
@@ -14,7 +14,6 @@ interface OAuthUrl {
 }
 
 function LoginInner() {
-  const router = useRouter()
   const params = useSearchParams()
   const nextPath = params.get("next") ?? "/dashboard"
 
@@ -49,8 +48,8 @@ function LoginInner() {
         password,
         turnstileToken,
       })
-      router.push(nextPath)
-      router.refresh()
+      // Hard navigation ensures the cookie is available on the next page.
+      window.location.href = nextPath
     } catch (err) {
       setError((err as Error).message)
     } finally {
@@ -152,10 +151,8 @@ function LoginInner() {
 
 export default function LoginPage() {
   return (
-    <main className="mx-auto w-full max-w-6xl px-4">
-      <Suspense>
-        <LoginInner />
-      </Suspense>
-    </main>
+    <Suspense>
+      <LoginInner />
+    </Suspense>
   )
 }

@@ -21,7 +21,6 @@ import {
 import { api } from "@/lib/api"
 import { ContestCard, type ContestCardData } from "@/components/contest-card"
 import {
-  Accordion,
   Avatar,
   Countup,
   Marquee,
@@ -29,6 +28,7 @@ import {
   SectionHeading,
 } from "@/components/marketing"
 import { Badge, Card, CardContent, EmptyState, Skeleton } from "@/components/ui"
+import { Faq6 } from "@/components/watermelon-ui/faq-6"
 import { cn } from "@skillcontest/ui"
 import { inr } from "@/lib/format"
 
@@ -193,13 +193,30 @@ export default function HomePage() {
     <div className="overflow-x-clip">
       {/* ============================== Hero ============================== */}
       <section className="relative mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 pb-16 pt-16 text-center sm:pt-24">
+        {/* Floating gradient orbs */}
+        <motion.div
+          className="pointer-events-none absolute -left-32 top-0 h-96 w-96 rounded-full bg-orange-500/10 blur-3xl"
+          animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="pointer-events-none absolute -right-32 top-20 h-80 w-80 rounded-full bg-amber-500/10 blur-3xl"
+          animate={{ x: [0, -25, 0], y: [0, 25, 0] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="pointer-events-none absolute left-1/2 top-40 h-64 w-64 -translate-x-1/2 rounded-full bg-yellow-500/8 blur-3xl"
+          animate={{ scale: [1, 1.15, 1] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        />
+
         {/* Live pulse */}
         {contests && contests.contests.length > 0 && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4 }}
-            className="flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-sm font-medium text-orange-700 dark:border-orange-800 dark:bg-orange-950/50 dark:text-orange-300"
+            className="relative z-10 flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-sm font-medium text-orange-700 dark:border-orange-800 dark:bg-orange-950/50 dark:text-orange-300"
           >
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75" />
@@ -222,22 +239,27 @@ export default function HomePage() {
         )}
 
         <motion.h1
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="max-w-3xl text-4xl font-extrabold tracking-tight sm:text-6xl"
+          transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          className="relative z-10 max-w-3xl text-4xl font-extrabold tracking-tight sm:text-6xl"
         >
           Compete. Solve.{" "}
-          <span className="bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-500 bg-clip-text text-transparent">
+          <motion.span
+            className="bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-500 bg-clip-text text-transparent"
+            animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+            style={{ backgroundSize: "200% 200%" }}
+          >
             Win real prizes.
-          </span>
+          </motion.span>
         </motion.h1>
 
         <motion.p
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="max-w-xl text-lg text-muted-foreground"
+          transition={{ duration: 0.6, delay: 0.25 }}
+          className="relative z-10 max-w-xl text-lg text-muted-foreground"
         >
           Pay ₹20 to enter a timed coding contest, race the clock against other
           developers, and climb the leaderboard for prize money.
@@ -246,8 +268,8 @@ export default function HomePage() {
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="flex flex-wrap items-center justify-center gap-3"
+          transition={{ duration: 0.6, delay: 0.35 }}
+          className="relative z-10 flex flex-wrap items-center justify-center gap-3"
         >
           <ButtonLink href="/contests">
             Browse contests <ArrowRight className="h-4 w-4" aria-hidden />
@@ -418,6 +440,62 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ========================== Stats ========================== */}
+      <section className="relative overflow-hidden border-y border-border bg-gradient-to-b from-muted/40 to-background py-14">
+        <div className="mx-auto max-w-6xl px-4">
+          <SectionHeading
+            eyebrow="By the numbers"
+            title="A growing arena"
+          />
+          <div className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-4">
+            {[
+              { label: "Problems solved", value: 12400, icon: <Code2 className="h-5 w-5" /> },
+              { label: "Total prizes paid", value: 850000, format: (n: number) => inr(Math.round(n)), icon: <Wallet className="h-5 w-5" /> },
+              { label: "Active coders", value: 3200, icon: <Users className="h-5 w-5" /> },
+              { label: "Contests hosted", value: 180, icon: <Trophy className="h-5 w-5" /> },
+            ].map((stat, i) => (
+              <Reveal key={stat.label} delay={i * 0.1}>
+                <Card className="relative overflow-hidden p-5 text-center">
+                  <div className="mb-3 flex justify-center text-orange-500">
+                    {stat.icon}
+                  </div>
+                  <p className="text-3xl font-extrabold tabular-nums tracking-tight">
+                    <Countup value={stat.value} format={stat.format} />
+                  </p>
+                  <p className="mt-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {stat.label}
+                  </p>
+                </Card>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ========================== Languages ========================== */}
+      <section className="mx-auto max-w-6xl px-4 py-14">
+        <SectionHeading
+          eyebrow="Languages"
+          title="Code in your language"
+          description="We support the most popular languages for competitive programming."
+        />
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          {["JavaScript", "Python", "Java", "C++", "Go", "TypeScript"].map((lang, i) => (
+            <motion.div
+              key={lang}
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: i * 0.06 }}
+              whileHover={{ scale: 1.08, y: -2 }}
+              className="cursor-default rounded-xl border border-border bg-card px-5 py-3 text-sm font-medium shadow-sm transition-colors hover:border-orange-300 hover:text-orange-600 dark:hover:border-orange-700 dark:hover:text-orange-400"
+            >
+              {lang}
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
       {/* ========================= Live contests ========================== */}
       <section className="mx-auto max-w-6xl px-4 py-14">
         <div className="mb-8 flex items-end justify-between gap-4">
@@ -501,21 +579,18 @@ export default function HomePage() {
 
       {/* ============================== FAQs ============================== */}
       {faqs && faqs.length > 0 && (
-        <section className="mx-auto max-w-3xl px-4 py-14">
-          <SectionHeading
-            eyebrow="FAQ"
-            title="Frequently asked questions"
-            description="Everything about entry fees, prizes, and how contests work."
-          />
-          <Accordion
-            className="mt-8"
-            items={faqs.map((f) => ({
+        <Reveal>
+          <Faq6
+            badge="FAQ"
+            title="Questions"
+            faqs={faqs.map((f) => ({
               id: f._id,
               question: f.question,
               answer: f.answer,
             }))}
+            className="px-4 py-14"
           />
-        </section>
+        </Reveal>
       )}
 
       {/* =============================== CTA ============================== */}

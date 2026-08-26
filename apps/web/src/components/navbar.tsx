@@ -4,11 +4,12 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
 import { Menu, Trophy, Wallet, X } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { api } from "@/lib/api"
 import { useMe } from "@/hooks/use-me"
 import { Button } from "./ui"
 import { ThemeToggle } from "@/components/theme-toggle"
+import Announcement1 from "@/components/watermelon-ui/announcement-1"
 import { cn } from "@skillcontest/ui"
 
 const links = [
@@ -39,7 +40,9 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
+    <>
+      <Announcement1 />
+      <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
           <Trophy className="h-5 w-5 text-orange-500" aria-hidden />
@@ -52,7 +55,7 @@ export function Navbar() {
               key={l.href}
               href={l.href}
               className={cn(
-                "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent",
+                "cursor-pointer rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent",
                 pathname.startsWith(l.href)
                   ? "text-foreground"
                   : "text-muted-foreground hover:text-foreground",
@@ -106,7 +109,7 @@ export function Navbar() {
           <ThemeToggle />
           <button
             type="button"
-            className="rounded-lg p-2 hover:bg-accent"
+            className="cursor-pointer rounded-lg p-2 hover:bg-accent"
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
@@ -116,36 +119,49 @@ export function Navbar() {
         </div>
       </div>
 
+      {/* Mobile menu overlay + panel */}
       {open && (
-        <nav aria-label="Mobile navigation" className="border-t border-border px-4 py-3 md:hidden">
-          <div className="flex flex-col gap-1">
-            {links.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                onClick={() => setOpen(false)}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
-              >
-                {l.label}
-              </Link>
-            ))}
-            {me ? (
-              <>
-                <Link href="/profile" onClick={() => setOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent">
-                  Profile
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 top-16 z-30 bg-black/20 md:hidden"
+            onClick={() => setOpen(false)}
+            aria-hidden="true"
+          />
+          <nav
+            aria-label="Mobile navigation"
+            className="fixed left-0 right-0 top-16 z-40 border-b border-border bg-background px-4 py-3 shadow-lg md:hidden"
+          >
+            <div className="flex flex-col gap-1">
+              {links.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+                >
+                  {l.label}
                 </Link>
-                <button onClick={logout} className="rounded-lg px-3 py-2 text-left text-sm font-medium text-red-500">
-                  Logout
-                </button>
-              </>
-            ) : (
-              <Link href="/login" onClick={() => setOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent">
-                Sign in
-              </Link>
-            )}
-          </div>
-        </nav>
+              ))}
+              {me ? (
+                <>
+                  <Link href="/profile" onClick={() => setOpen(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent">
+                    Profile
+                  </Link>
+                  <button onClick={logout} className="rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-500">
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <Link href="/login" onClick={() => setOpen(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent">
+                  Sign in
+                </Link>
+              )}
+            </div>
+          </nav>
+        </>
       )}
     </header>
+    </>
   )
 }

@@ -214,8 +214,8 @@ export default function ContestDetailPage() {
                 </div>
                 {prizes.winners.length > 0 ? (
                   <ul className="mt-4 divide-y divide-border">
-                    {prizes.winners.map((w) => (
-                      <li key={w.rank} className="flex items-center justify-between py-2 text-sm">
+                    {prizes.winners.map((w, i) => (
+                      <li key={`${w.rank}-${w.user?.firstName ?? 'anon'}-${i}`} className="flex items-center justify-between py-2 text-sm">
                         <span className="font-medium">
                           #{w.rank} {w.user ? `${w.user.firstName} ${w.user.lastName}` : "—"}
                         </span>
@@ -302,9 +302,9 @@ export default function ContestDetailPage() {
             )}
             {isLive && (
               <button
-                type="button"
-                onClick={() => router.push(`/contests/${id}/workspace`)}
-                className="mt-2 inline-flex h-11 w-full items-center justify-center rounded-lg border border-border px-6 text-base font-medium transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              type="button"
+              onClick={() => router.push(`/contests/${id}/workspace`)}
+              className="mt-2 inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-lg border border-border px-6 text-base font-medium transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 Go to workspace
               </button>

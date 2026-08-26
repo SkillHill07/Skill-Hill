@@ -1,5 +1,8 @@
+"use client"
+
 import Link from "next/link"
 import { Trophy } from "lucide-react"
+import { useMe } from "@/hooks/use-me"
 
 const footerNav = [
   {
@@ -20,6 +23,7 @@ const footerNav = [
   },
   {
     heading: "Get started",
+    authOnly: true,
     links: [
       { href: "/register", label: "Create account" },
       { href: "/login", label: "Sign in" },
@@ -28,6 +32,7 @@ const footerNav = [
 ]
 
 export function Footer() {
+  const { data: me } = useMe()
   return (
     <footer className="border-t border-border bg-muted/30">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
@@ -42,7 +47,7 @@ export function Footer() {
           </p>
         </div>
 
-        {footerNav.map((group) => (
+        {footerNav.filter((group) => !group.authOnly || !me).map((group) => (
           <nav key={group.heading} aria-label={group.heading}>
             <p className="mb-3 text-sm font-semibold">{group.heading}</p>
             <ul className="flex flex-col gap-2 text-sm text-muted-foreground">

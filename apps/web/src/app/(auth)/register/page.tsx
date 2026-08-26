@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+
 import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 import { Github, UserPlus } from "lucide-react"
@@ -22,7 +22,6 @@ interface OAuthUrl {
 }
 
 export default function RegisterPage() {
-  const router = useRouter()
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
@@ -58,8 +57,8 @@ export default function RegisterPage() {
         password,
         turnstileToken,
       })
-      router.push("/dashboard?welcome=1")
-      router.refresh()
+      // Hard navigation ensures the cookie is available on the next page.
+      window.location.href = "/dashboard?welcome=1"
     } catch (err) {
       setError((err as Error).message)
     } finally {
