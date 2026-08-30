@@ -468,19 +468,34 @@ export function ProblemViewer({ problemSlug }: { problemSlug: string }) {
               </div>
             </>
           ) : (
-            /* MCQ submit */
-            <div className="flex flex-col items-center justify-center flex-1 p-6">
-              <Button
-                className="w-full max-w-sm"
-                loading={busy === "submit"}
-                disabled={mcqChoice === null || busy !== null}
-                onClick={() => send("submit")}
-              >
-                <Send className="h-4 w-4" /> Submit answer
-              </Button>
-              <div className="mt-4 w-full">
-                <ResultsPanel submission={submission} liveStatus={liveStatus} history={history} />
+            /* MCQ — no code editor, just submit + result */
+            <div className="flex flex-col flex-1">
+              <div className="flex flex-col items-center justify-center flex-1 p-6">
+                <div className="w-full max-w-sm space-y-4">
+                  <div className="rounded-xl border border-border bg-card p-5 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      {mcqChoice === null
+                        ? "Select an answer on the left, then submit."
+                        : `You selected option ${String.fromCharCode(65 + mcqChoice)}`}
+                    </p>
+                  </div>
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    loading={busy === "submit"}
+                    disabled={mcqChoice === null || busy !== null}
+                    onClick={() => send("submit")}
+                  >
+                    <Send className="h-4 w-4" /> Submit answer
+                  </Button>
+                </div>
               </div>
+              {/* Submission result */}
+              {(submission || liveStatus) && (
+                <div className="border-t border-border">
+                  <ResultsPanel submission={submission} liveStatus={liveStatus} history={history} />
+                </div>
+              )}
             </div>
           )}
         </div>

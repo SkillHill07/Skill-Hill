@@ -65,11 +65,12 @@ async function main(): Promise<void> {
   const now = Date.now()
   const admin = users["admin@skillhill.dev"]
 
+  // ── 1. Live paid coding contest ──
   const liveContest = await Contest.create({
     title: "Winter Sprint Challenge",
     slug: "winter-sprint-challenge",
     description:
-      "A fast-paced 90-minute sprint through three classic algorithm problems and one quick-fire MCQ. Warm up on arrays, then climb into graph territory before the clock runs out.",
+      "A fast-paced 90-minute sprint through classic algorithm problems. Warm up on arrays, then climb into graph territory before the clock runs out.",
     problemIds: [],
     startTime: new Date(now - 30 * 60 * 1000),
     endTime: new Date(now + 90 * 60 * 1000),
@@ -83,6 +84,7 @@ async function main(): Promise<void> {
     createdBy: admin._id,
   })
 
+  // ── 2. Upcoming paid coding contest ──
   const upcomingContest = await Contest.create({
     title: "Algorithms Open — February",
     slug: "algorithms-open-february",
@@ -100,6 +102,7 @@ async function main(): Promise<void> {
     createdBy: admin._id,
   })
 
+  // ── 3. Free coding practice contest ──
   const freePractice = await Contest.create({
     title: "Weekend Warmup (Free)",
     slug: "weekend-warmup-free",
@@ -116,6 +119,7 @@ async function main(): Promise<void> {
     createdBy: admin._id,
   })
 
+  // ── 4. Settled coding contest ──
   const settledContest = await Contest.create({
     title: "January Weekly #4",
     slug: "january-weekly-4",
@@ -132,7 +136,99 @@ async function main(): Promise<void> {
     createdBy: admin._id,
   })
 
-  // ---------------------------------------------------------------- problems
+  // ── 5. FREE MCQ timed contest — Data Structures Quickfire ──
+  const mcqFreeContest = await Contest.create({
+    title: "Data Structures Quickfire",
+    slug: "data-structures-quickfire",
+    description:
+      "Test your knowledge of arrays, linked lists, trees, and hash maps. 10 MCQs, 10 minutes — fast fingers and fast thinking!",
+    problemIds: [],
+    startTime: new Date(now - 2 * 60 * 60 * 1000),
+    endTime: new Date(now + 4 * 60 * 60 * 1000),
+    type: "free",
+    entryFee: 0,
+    prizePool: 3000,
+    maxParticipants: null,
+    status: "active",
+    rules: "10 multiple-choice questions. 1 point each. 10-minute timer. No negative marking.",
+    createdBy: admin._id,
+  })
+
+  // ── 6. FREE MCQ timed contest — Big-O & Complexity ──
+  const mcqComplexityContest = await Contest.create({
+    title: "Big-O & Complexity Quiz",
+    slug: "big-o-complexity-quiz",
+    description:
+      "How well do you know your time and space complexities? 8 questions covering sorting, searching, and graph algorithms.",
+    problemIds: [],
+    startTime: new Date(now - 1 * 60 * 60 * 1000),
+    endTime: new Date(now + 5 * 60 * 60 * 1000),
+    type: "free",
+    entryFee: 0,
+    prizePool: 2000,
+    maxParticipants: null,
+    status: "active",
+    rules: "8 MCQs, 8 minutes. 1 point each. Choose the best answer.",
+    createdBy: admin._id,
+  })
+
+  // ── 7. FREE MCQ timed contest — JavaScript Fundamentals ──
+  const mcqJsContest = await Contest.create({
+    title: "JavaScript Fundamentals Quiz",
+    slug: "javascript-fundamentals-quiz",
+    description:
+      "Closures, event loop, prototypal inheritance, and more. 6 quick-fire MCQs to test your JS chops.",
+    problemIds: [],
+    startTime: new Date(now + 1 * 24 * 60 * 60 * 1000),
+    endTime: new Date(now + 1 * 24 * 60 * 60 * 1000 + 90 * 60 * 1000),
+    type: "free",
+    entryFee: 0,
+    prizePool: 1500,
+    maxParticipants: null,
+    status: "active",
+    rules: "6 MCQs, 90 seconds each. 1 point per correct answer.",
+    createdBy: admin._id,
+  })
+
+  // ── 8. PAID MCQ timed contest — System Design Concepts ──
+  const mcqPaidContest = await Contest.create({
+    title: "System Design Concepts",
+    slug: "system-design-concepts",
+    description:
+      "CAP theorem, sharding, caching strategies, and load balancing. 10 premium MCQs for serious engineers. ₹20 entry, ₹5,000 prize pool.",
+    problemIds: [],
+    startTime: new Date(now + 2 * 24 * 60 * 60 * 1000),
+    endTime: new Date(now + 2 * 24 * 60 * 60 * 1000 + 15 * 60 * 1000),
+    type: "paid",
+    entryFee: 2000,
+    prizePool: 50000,
+    maxParticipants: 100,
+    status: "active",
+    rules: "10 MCQs, 15-minute timer. ₹20 entry. Top 3 win prize money.",
+    createdBy: admin._id,
+  })
+
+  // ── 9. Live coding contest — Strings & Patterns ──
+  const stringsContest = await Contest.create({
+    title: "Strings & Patterns Sprint",
+    slug: "strings-patterns-sprint",
+    description:
+      "String manipulation, pattern matching, and substring problems. 3 coding problems in 60 minutes.",
+    problemIds: [],
+    startTime: new Date(now - 15 * 60 * 1000),
+    endTime: new Date(now + 45 * 60 * 1000),
+    type: "free",
+    entryFee: 0,
+    prizePool: 3000,
+    maxParticipants: null,
+    status: "active",
+    rules: "Free coding contest. Best score wins.",
+    createdBy: admin._id,
+  })
+
+  // ================================================================ PROBLEMS
+
+  // ── Live contest coding problems ──
   const sumProblem = await Problem.create({
     title: "Two Sum Return",
     slug: "two-sum-return",
@@ -204,6 +300,7 @@ async function main(): Promise<void> {
     imageUrls: [],
   })
 
+  // ── Upcoming contest problems ──
   const dpProblem = await Problem.create({
     title: "Staircase Paths",
     slug: "staircase-paths",
@@ -226,11 +323,34 @@ async function main(): Promise<void> {
     imageUrls: [],
   })
 
+  const greedyProblem = await Problem.create({
+    title: "Activity Selection",
+    slug: "activity-selection",
+    contestId: upcomingContest._id,
+    type: "coding",
+    difficulty: "hard",
+    points: 150,
+    timeLimit: 4000,
+    memoryLimit: 256,
+    languageSupport: ["javascript", "python", "cpp"],
+    solutionTemplate: {},
+    description:
+      "Given n activities with start and end times, select the maximum number of non-overlapping activities.\n\nInput:\n- First line: n\n- Next n lines: start end\n\nOutput:\n- Maximum number of activities.",
+    options: [],
+    correctAnswer: null,
+    testCases: [
+      { input: "4\n1 2\n3 4\n0 6\n5 7", expectedOutput: "3", isPublic: true },
+      { input: "3\n1 4\n2 3\n3 5", expectedOutput: "2", isPublic: false },
+    ],
+    imageUrls: [],
+  })
+
   liveContest.problemIds = [sumProblem._id, graphProblem._id, mcqProblem._id]
   await liveContest.save()
-  upcomingContest.problemIds = [dpProblem._id]
+  upcomingContest.problemIds = [dpProblem._id, greedyProblem._id]
   await upcomingContest.save()
 
+  // ── Settled contest problems ──
   const settledProblems = await Problem.create([
     {
       title: "Reverse Words",
@@ -253,7 +373,7 @@ async function main(): Promise<void> {
   settledContest.problemIds = [settledProblems[0]._id]
   await settledContest.save()
 
-  // ------------------------------------------------- freePractice problems
+  // ── Free practice coding problems ──
   const freeProblems = await Problem.create([
     {
       title: "FizzBuzz",
@@ -349,7 +469,740 @@ async function main(): Promise<void> {
   freePractice.problemIds = freeProblems.map((p) => p._id)
   await freePractice.save()
 
-  // ----------------------------------------------------------- participation
+  // ── Strings contest problems ──
+  const stringsProblems = await Problem.create([
+    {
+      title: "Anagram Checker",
+      slug: "anagram-checker",
+      contestId: stringsContest._id,
+      type: "coding",
+      difficulty: "easy",
+      points: 25,
+      timeLimit: 1000,
+      memoryLimit: 128,
+      languageSupport: ["javascript", "python"],
+      solutionTemplate: {},
+      description: "Check if two strings are anagrams of each other.\n\nInput: Two lines, each a string.\nOutput: 'true' or 'false'.",
+      options: [],
+      correctAnswer: null,
+      testCases: [
+        { input: "listen\nsilent", expectedOutput: "true", isPublic: true },
+        { input: "hello\nworld", expectedOutput: "false", isPublic: true },
+      ],
+      imageUrls: [],
+    },
+    {
+      title: "Longest Substring",
+      slug: "longest-substring",
+      contestId: stringsContest._id,
+      type: "coding",
+      difficulty: "medium",
+      points: 75,
+      timeLimit: 2000,
+      memoryLimit: 256,
+      languageSupport: ["javascript", "python"],
+      solutionTemplate: {},
+      description: "Find the length of the longest substring without repeating characters.\n\nInput: A string.\nOutput: Integer length.",
+      options: [],
+      correctAnswer: null,
+      testCases: [
+        { input: "abcabcbb", expectedOutput: "3", isPublic: true },
+        { input: "bbbbb", expectedOutput: "1", isPublic: false },
+      ],
+      imageUrls: [],
+    },
+    {
+      title: "String Compression",
+      slug: "string-compression",
+      contestId: stringsContest._id,
+      type: "coding",
+      difficulty: "hard",
+      points: 100,
+      timeLimit: 3000,
+      memoryLimit: 256,
+      languageSupport: ["javascript", "python"],
+      solutionTemplate: {},
+      description: "Implement basic string compression using counts of repeated characters.\n\nInput: A string.\nOutput: Compressed string (e.g., 'aabcccccaaa' → 'a2b1c5a3').",
+      options: [],
+      correctAnswer: null,
+      testCases: [
+        { input: "aabcccccaaa", expectedOutput: "a2b1c5a3", isPublic: true },
+        { input: "abcdef", expectedOutput: "abcdef", isPublic: false },
+      ],
+      imageUrls: [],
+    },
+  ])
+  stringsContest.problemIds = stringsProblems.map((p) => p._id)
+  await stringsContest.save()
+
+  // ── MCQ Free Contest: Data Structures Quickfire (10 questions) ──
+  const dsMcqs = await Problem.create([
+    {
+      title: "Array Access Time",
+      slug: "ds-array-access",
+      contestId: mcqFreeContest._id,
+      type: "mcq",
+      difficulty: "easy",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "What is the time complexity of accessing an element by index in an array?",
+      options: ["O(1)", "O(n)", "O(log n)", "O(n²)"],
+      correctAnswer: 0,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Linked List Insertion",
+      slug: "ds-linked-list-insert",
+      contestId: mcqFreeContest._id,
+      type: "mcq",
+      difficulty: "easy",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "What is the time complexity of inserting at the head of a singly linked list?",
+      options: ["O(1)", "O(n)", "O(log n)", "O(n²)"],
+      correctAnswer: 0,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Binary Tree Height",
+      slug: "ds-binary-tree-height",
+      contestId: mcqFreeContest._id,
+      type: "mcq",
+      difficulty: "medium",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "What is the maximum number of nodes in a binary tree of height h?",
+      options: ["2^h", "2^(h+1) - 1", "h²", "2h"],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Hash Table Collision",
+      slug: "ds-hash-collision",
+      contestId: mcqFreeContest._id,
+      type: "mcq",
+      difficulty: "medium",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "Which technique stores colliding elements in a separate linked list?",
+      options: ["Open addressing", "Chaining", "Rehashing", "Clustering"],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Stack Operations",
+      slug: "ds-stack-operations",
+      contestId: mcqFreeContest._id,
+      type: "mcq",
+      difficulty: "easy",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "Which data structure follows LIFO (Last In, First Out) order?",
+      options: ["Queue", "Stack", "Array", "Linked List"],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "BST Search",
+      slug: "ds-bst-search",
+      contestId: mcqFreeContest._id,
+      type: "mcq",
+      difficulty: "medium",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "What is the average time complexity of search in a balanced BST?",
+      options: ["O(1)", "O(n)", "O(log n)", "O(n log n)"],
+      correctAnswer: 2,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Heap Property",
+      slug: "ds-heap-property",
+      contestId: mcqFreeContest._id,
+      type: "mcq",
+      difficulty: "medium",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "In a min-heap, which property holds for every node?",
+      options: [
+        "Parent is greater than children",
+        "Parent is less than or equal to children",
+        "All leaves are at the same level",
+        "Nodes are sorted left to right",
+      ],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Graph BFS",
+      slug: "ds-graph-bfs",
+      contestId: mcqFreeContest._id,
+      type: "mcq",
+      difficulty: "medium",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "Which data structure is used in BFS traversal of a graph?",
+      options: ["Stack", "Queue", "Priority Queue", "Deque"],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Trie Usage",
+      slug: "ds-trie-usage",
+      contestId: mcqFreeContest._id,
+      type: "mcq",
+      difficulty: "hard",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "A Trie is most efficiently used for which operation?",
+      options: [
+        "Finding the maximum element",
+        "Prefix-based string search",
+        "Sorting integers",
+        "Finding the median",
+      ],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Disjoint Set",
+      slug: "ds-disjoint-set",
+      contestId: mcqFreeContest._id,
+      type: "mcq",
+      difficulty: "hard",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "Which operation makes Union-Find nearly O(1) amortized?",
+      options: [
+        "Path compression + union by rank",
+        "Balancing the tree",
+        "Hashing the elements",
+        "Using a Fibonacci heap",
+      ],
+      correctAnswer: 0,
+      testCases: [],
+      imageUrls: [],
+    },
+  ])
+  mcqFreeContest.problemIds = dsMcqs.map((p) => p._id)
+  await mcqFreeContest.save()
+
+  // ── MCQ Free Contest: Big-O & Complexity (8 questions) ──
+  const bigOMcqs = await Problem.create([
+    {
+      title: "Merge Sort Complexity",
+      slug: "bigo-merge-sort",
+      contestId: mcqComplexityContest._id,
+      type: "mcq",
+      difficulty: "easy",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "What is the average time complexity of merge sort?",
+      options: ["O(n)", "O(n log n)", "O(n²)", "O(log n)"],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Quick Sort Worst Case",
+      slug: "bigo-quicksort-worst",
+      contestId: mcqComplexityContest._id,
+      type: "mcq",
+      difficulty: "medium",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "What is the worst-case time complexity of quicksort?",
+      options: ["O(n log n)", "O(n)", "O(n²)", "O(2^n)"],
+      correctAnswer: 2,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Space Complexity of DFS",
+      slug: "bigo-dfs-space",
+      contestId: mcqComplexityContest._id,
+      type: "mcq",
+      difficulty: "medium",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "What is the space complexity of DFS on a graph with V vertices?",
+      options: ["O(1)", "O(V)", "O(V²)", "O(E)"],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Amortized Push",
+      slug: "bigo-amortized-push",
+      contestId: mcqComplexityContest._id,
+      type: "mcq",
+      difficulty: "medium",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "What is the amortized time complexity of push operations in a dynamic array?",
+      options: ["O(1)", "O(log n)", "O(n)", "O(n²)"],
+      correctAnswer: 0,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Dijkstra Complexity",
+      slug: "bigo-dijkstra",
+      contestId: mcqComplexityContest._id,
+      type: "mcq",
+      difficulty: "hard",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "What is the time complexity of Dijkstra's algorithm with a binary heap?",
+      options: ["O(V²)", "O((V + E) log V)", "O(V log V)", "O(E log E)"],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Recurrence Relation",
+      slug: "bigo-recurrence",
+      contestId: mcqComplexityContest._id,
+      type: "mcq",
+      difficulty: "hard",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "Solve: T(n) = 2T(n/2) + n. What is T(n)?",
+      options: ["O(n)", "O(n log n)", "O(n²)", "O(log n)"],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "NP-Complete Problem",
+      slug: "bigo-np-complete",
+      contestId: mcqComplexityContest._id,
+      type: "mcq",
+      difficulty: "hard",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "Which of these is NP-Complete?",
+      options: [
+        "Shortest path in a graph",
+        "Traveling Salesman Problem (decision version)",
+        "Binary search",
+        "Merge sort",
+      ],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Master Theorem",
+      slug: "bigo-master-theorem",
+      contestId: mcqComplexityContest._id,
+      type: "mcq",
+      difficulty: "hard",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "Using the Master Theorem, solve T(n) = 4T(n/2) + n².",
+      options: ["O(n²)", "O(n² log n)", "O(n³)", "O(log n)"],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+  ])
+  mcqComplexityContest.problemIds = bigOMcqs.map((p) => p._id)
+  await mcqComplexityContest.save()
+
+  // ── MCQ Free Contest: JavaScript Fundamentals (6 questions) ──
+  const jsMcqs = await Problem.create([
+    {
+      title: "Closure Scope",
+      slug: "js-closure-scope",
+      contestId: mcqJsContest._id,
+      type: "mcq",
+      difficulty: "easy",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "What does a closure in JavaScript give you access to?",
+      options: [
+        "The global scope only",
+        "The outer function's scope after the outer function has returned",
+        "Only the current block scope",
+        "No extra scope",
+      ],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Event Loop",
+      slug: "js-event-loop",
+      contestId: mcqJsContest._id,
+      type: "mcq",
+      difficulty: "medium",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "In which order does JavaScript execute: microtasks, macrotasks, rendering?",
+      options: [
+        "Macrotasks → Microtasks → Rendering",
+        "Microtasks → Rendering → Macrotasks",
+        "Rendering → Macrotasks → Microtasks",
+        "Microtasks → Macrotasks → Rendering",
+      ],
+      correctAnswer: 3,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "typeof null",
+      slug: "js-typeof-null",
+      contestId: mcqJsContest._id,
+      type: "mcq",
+      difficulty: "easy",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "What does `typeof null` return in JavaScript?",
+      options: ['"null"', '"undefined"', '"object"', '"boolean"'],
+      correctAnswer: 2,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Promise Resolution",
+      slug: "js-promise-resolution",
+      contestId: mcqJsContest._id,
+      type: "mcq",
+      difficulty: "medium",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "What is the output of: `Promise.resolve(1).then(console.log)`?",
+      options: ["1", "Promise { <fulfilled>: 1 }", "undefined", "TypeError"],
+      correctAnswer: 0,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Prototypal Inheritance",
+      slug: "js-prototype",
+      contestId: mcqJsContest._id,
+      type: "mcq",
+      difficulty: "medium",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "How does JavaScript implement inheritance?",
+      options: ["Class-based", "Prototypal", "Multiple inheritance", "Trait-based"],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Strict Equality",
+      slug: "js-strict-equality",
+      contestId: mcqJsContest._id,
+      type: "mcq",
+      difficulty: "easy",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: 'What is the result of `0 === false` in JavaScript?',
+      options: ["true", "false", "TypeError", "undefined"],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+  ])
+  mcqJsContest.problemIds = jsMcqs.map((p) => p._id)
+  await mcqJsContest.save()
+
+  // ── MCQ Paid Contest: System Design Concepts (10 questions) ──
+  const sysDesignMcqs = await Problem.create([
+    {
+      title: "CAP Theorem",
+      slug: "sd-cap-theorem",
+      contestId: mcqPaidContest._id,
+      type: "mcq",
+      difficulty: "medium",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "The CAP theorem states that a distributed system can guarantee at most two of three properties. Which are they?",
+      options: [
+        "Consistency, Availability, Partition tolerance",
+        "Consistency, Availability, Performance",
+        "Concurrency, Accessibility, Partition tolerance",
+        "Consistency, Authenticity, Performance",
+      ],
+      correctAnswer: 0,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Database Sharding",
+      slug: "sd-sharding",
+      contestId: mcqPaidContest._id,
+      type: "mcq",
+      difficulty: "medium",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "What is database sharding?",
+      options: [
+        "Replicating the same data across multiple servers",
+        "Splitting data horizontally across multiple databases",
+        "Encrypting data at rest",
+        "Compressing data before storage",
+      ],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Load Balancer",
+      slug: "sd-load-balancer",
+      contestId: mcqPaidContest._id,
+      type: "mcq",
+      difficulty: "easy",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "Which algorithm distributes requests to the server with the fewest active connections?",
+      options: ["Round Robin", "Least Connections", "Random", "IP Hash"],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Cache Eviction",
+      slug: "sd-cache-eviction",
+      contestId: mcqPaidContest._id,
+      type: "mcq",
+      difficulty: "medium",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "Which cache eviction policy removes the item that was accessed least recently?",
+      options: ["FIFO", "LFU", "LRU", "Random"],
+      correctAnswer: 2,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Message Queue",
+      slug: "sd-message-queue",
+      contestId: mcqPaidContest._id,
+      type: "mcq",
+      difficulty: "medium",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "What is the primary benefit of using a message queue between services?",
+      options: [
+        "Reduced latency",
+        "Decoupling and asynchronous processing",
+        "Stronger consistency",
+        "Lower memory usage",
+      ],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Consistent Hashing",
+      slug: "sd-consistent-hashing",
+      contestId: mcqPaidContest._id,
+      type: "mcq",
+      difficulty: "hard",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "What problem does consistent hashing solve?",
+      options: [
+        "Data encryption across nodes",
+        "Minimizing key redistribution when nodes are added/removed",
+        "Load balancing across regions",
+        "Database replication lag",
+      ],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "CDN Purpose",
+      slug: "sd-cdn",
+      contestId: mcqPaidContest._id,
+      type: "mcq",
+      difficulty: "easy",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "What does a CDN primarily improve?",
+      options: [
+        "Database query performance",
+        "Static asset delivery latency by caching near users",
+        "Application code execution speed",
+        "Server-side rendering",
+      ],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Rate Limiting",
+      slug: "sd-rate-limiting",
+      contestId: mcqPaidContest._id,
+      type: "mcq",
+      difficulty: "medium",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "Which rate limiting algorithm allows bursts while enforcing an average rate?",
+      options: ["Fixed Window", "Sliding Window Log", "Token Bucket", "Leaky Bucket"],
+      correctAnswer: 2,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Microservices Trade-off",
+      slug: "sd-microservices",
+      contestId: mcqPaidContest._id,
+      type: "mcq",
+      difficulty: "hard",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "What is a major disadvantage of microservices over a monolith?",
+      options: [
+        "Harder to scale individual services",
+        "Increased operational complexity and network overhead",
+        "Less code reusability",
+        "Tighter coupling between components",
+      ],
+      correctAnswer: 1,
+      testCases: [],
+      imageUrls: [],
+    },
+    {
+      title: "Database Index",
+      slug: "sd-database-index",
+      contestId: mcqPaidContest._id,
+      type: "mcq",
+      difficulty: "medium",
+      points: 10,
+      timeLimit: 1000,
+      memoryLimit: 64,
+      languageSupport: [],
+      solutionTemplate: {},
+      description: "What is the trade-off of adding a B-tree index to a database column?",
+      options: [
+        "Faster reads but slower writes and more storage",
+        "Faster writes but slower reads",
+        "No trade-off, only benefits",
+        "Reduced storage but slower queries",
+      ],
+      correctAnswer: 0,
+      testCases: [],
+      imageUrls: [],
+    },
+  ])
+  mcqPaidContest.problemIds = sysDesignMcqs.map((p) => p._id)
+  await mcqPaidContest.save()
+
+  // ============================================================ PARTICIPATION
   const players = [
     users["riya@skillhill.dev"],
     users["arjun@skillhill.dev"],
@@ -370,7 +1223,7 @@ async function main(): Promise<void> {
       status: "completed",
     })),
   )
-  // Live participants in the running contest
+  // Live participants
   await Participation.insertMany(
     players.slice(0, 3).map((p, i) => ({
       userId: p._id,
@@ -383,10 +1236,23 @@ async function main(): Promise<void> {
       status: "started",
     })),
   )
+  // MCQ contest participants
+  await Participation.insertMany(
+    players.slice(0, 4).map((p, i) => ({
+      userId: p._id,
+      contestId: mcqFreeContest._id,
+      joinedAt: new Date(now - 90 * 60 * 1000),
+      startedAt: new Date(now - 89 * 60 * 1000),
+      submittedAt: new Date(now - 80 * 60 * 1000),
+      totalScore: [8, 7, 6, 5][i],
+      rank: i + 1,
+      status: "completed",
+    })),
+  )
 
   // ------------------------------------------------------------------ prizes
   const prizeRows = [
-    { rank: 1, share: 0.4, users: [players[0], players[1]] }, // tie split
+    { rank: 1, share: 0.4, users: [players[0], players[1]] },
     { rank: 3, share: 0.15, users: [players[2]] },
     { rank: 4, share: 0.05, users: [players[3]] },
     { rank: 5, share: 0.05, users: [players[4]] },
@@ -406,7 +1272,7 @@ async function main(): Promise<void> {
     }
   }
 
-  // ----------------------------------------------------------------- wallets
+  // ------------------------------------------------------------------ wallets
   for (const [i, u] of players.entries()) {
     const existing = await Wallet.findOne({ userId: u._id })
     if (!existing) {
@@ -441,28 +1307,38 @@ async function main(): Promise<void> {
   await Banner.create([
     {
       title: "Winter Sprint Challenge is LIVE",
-      subtitle: "90 minutes, 4 problems, ₹80,000 pool — join before the timer starts.",
+      subtitle: "90 minutes, 3 problems, ₹80,000 pool — join before the timer starts.",
       imageUrl: null,
       ctaText: "Join now",
       ctaLink: `/contests/${liveContest._id}`,
       order: 1,
       isActive: true,
     },
+    {
+      title: "New: Free MCQ Quizzes!",
+      subtitle: "Test your knowledge with timed MCQ contests — no entry fee, instant results.",
+      imageUrl: null,
+      ctaText: "Try a quiz",
+      ctaLink: `/contests`,
+      order: 2,
+      isActive: true,
+    },
   ])
 
   await Faq.create([
-    { question: "How much does it cost to join a contest?", answer: "Most contests cost ₹20 to enter. Some warmup contests are completely free. The entry fee goes into the prize pool minus a small platform fee.", category: "Payments", order: 1, isActive: true },
+    { question: "How much does it cost to join a contest?", answer: "Most contests cost ₹20 to enter. Some warmup contests and MCQ quizzes are completely free. The entry fee goes into the prize pool minus a small platform fee.", category: "Payments", order: 1, isActive: true },
     { question: "When do I get my prize money?", answer: "Prizes are calculated and credited straight to your SkillHill wallet the moment a contest settles — usually within a few minutes of the timer ending.", category: "Prizes", order: 2, isActive: true },
     { question: "How do I withdraw my winnings?", answer: "Complete KYC (PAN verification) from your profile, then request a withdrawal from the wallet page. Payouts go to your verified UPI id.", category: "Withdrawals", order: 3, isActive: true },
     { question: "What happens if two people have the same score?", answer: "Ties share the prize money equally, and the earlier submission wins the higher rank for tie-breaking purposes.", category: "Rules", order: 4, isActive: true },
     { question: "Is my payment information safe?", answer: "All payments run through Razorpay — we never see or store your card details. Wallet balances use an append-only ledger with atomic transactions.", category: "Payments", order: 5, isActive: true },
     { question: "Can I practice without paying?", answer: "Yes! The practice library contains every problem from past contests, free to solve with the full editor and judge.", category: "Practice", order: 6, isActive: true },
+    { question: "What are MCQ contests?", answer: "Multiple-choice question contests test your knowledge with timed quizzes. No coding required — just pick the right answer. They're a great way to learn and win small prizes.", category: "Practice", order: 7, isActive: true },
   ])
 
   console.log("\nSeed complete:")
   console.log(`  users: ${userSeeds.length} (login: test@skillhill.dev / ${DEMO_PASSWORD})`)
-  console.log(`  contests: live=${liveContest.title}, upcoming=${upcomingContest.title}, settled=${settledContest.title}`)
-  console.log(`  problems: ${await Problem.countDocuments()}`)
+  console.log(`  contests: ${await Contest.countDocuments()} total`)
+  console.log(`  problems: ${await Problem.countDocuments()} total`)
   console.log(`  participations: ${await Participation.countDocuments()}`)
   console.log(`  prizes: ${await Prize.countDocuments()}`)
   await mongoose.disconnect()
