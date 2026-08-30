@@ -186,7 +186,7 @@ export function ProblemViewer({ problemSlug }: { problemSlug: string }) {
 
   if (isLoading) {
     return (
-      <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
+      <div className="flex h-screen items-center justify-center">
         <div className="text-center">
           <Skeleton className="mx-auto h-6 w-48" />
           <Skeleton className="mx-auto mt-3 h-4 w-32" />
@@ -197,7 +197,7 @@ export function ProblemViewer({ problemSlug }: { problemSlug: string }) {
 
   if (error) {
     return (
-      <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
+      <div className="flex h-screen items-center justify-center">
         <div className="text-center">
           <TriangleAlert className="mx-auto h-8 w-8 text-amber-500" />
           <p className="mt-2 text-sm text-muted-foreground">This problem isn&apos;t available for practice right now.</p>
@@ -215,7 +215,7 @@ export function ProblemViewer({ problemSlug }: { problemSlug: string }) {
   if (!problem) return null
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] flex-col">
+    <div className="flex h-screen flex-col">
       {/* Top bar */}
       <div className="flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-sm px-4 py-2">
         <div className="flex items-center gap-3">
@@ -405,9 +405,9 @@ export function ProblemViewer({ problemSlug }: { problemSlug: string }) {
               </div>
 
               {/* Results area */}
-              <div className="border-t border-border">
+              <div className="flex flex-col border-t border-border" style={{ height: '35%', minHeight: 140 }}>
                 {/* Result tabs */}
-                <div className="flex items-center border-b border-border bg-muted/30">
+                <div className="flex shrink-0 items-center border-b border-border bg-muted/30">
                   <button
                     onClick={() => setResultTab("testcase")}
                     className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors cursor-pointer ${
@@ -432,7 +432,7 @@ export function ProblemViewer({ problemSlug }: { problemSlug: string }) {
                   </button>
                 </div>
 
-                <div className="max-h-60 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto">
                   {resultTab === "result" ? (
                     <ResultsPanel submission={submission} liveStatus={liveStatus} history={history} />
                   ) : (

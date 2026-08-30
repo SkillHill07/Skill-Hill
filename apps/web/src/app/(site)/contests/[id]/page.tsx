@@ -10,6 +10,7 @@ import { formatDuration, formatDate, inr } from "@/lib/format"
 import { ContestStatusBadge } from "@/components/status-badge"
 import { Badge, Button, Card, CardContent, EmptyState, ErrorBanner, Skeleton } from "@/components/ui"
 import { Turnstile } from "@/components/turnstile"
+import { JoinContestDialog } from "@/components/join-contest-dialog"
 
 interface Contest {
   _id: string
@@ -68,6 +69,7 @@ export default function ContestDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [joining, setJoining] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState(() => getTurnstileToken())
+  const [joinDialogOpen, setJoinDialogOpen] = useState(false)
 
   const { data: contest, isLoading, isError } = useQuery({
     queryKey: ["contest", id],
@@ -285,20 +287,13 @@ export default function ContestDetailPage() {
             )}
 
             {canEnter && (
-              <>
-                <div className="mt-4">
-                  <Turnstile onToken={setTurnstileToken} />
-                </div>
-                <Button
-                  className="mt-3 w-full"
-                  size="lg"
-                  onClick={join}
-                  loading={joining}
-                  disabled={!turnstileToken}
-                >
-                  {isUpcoming ? "Register for contest" : "Join contest"}
-                </Button>
-              </>
+              <Button
+                className="mt-4 w-full"
+                size="lg"
+                onClick={() => setJoinDialogOpen(true)}
+              >
+                {isUpcoming ? "Register for contest" : "Join contest"}
+              </Button>
             )}
             {isLive && (
               <button
@@ -318,6 +313,22 @@ export default function ContestDetailPage() {
           </Card>
         </aside>
       </div>
+
+      <JoinContestDialog
+        open={joinDialogOpen}
+        onOpenChange={setJoinDialogOpen}
+        contestId={id}
+        contestTitle={contest.title}
+        entryFee={contest.entryFee}
+        prizePool={contest.prizePool}
+        onSuccess={() => {
+          void Promise.all([
+            queryClient.invalidateQueries({ queryKey: ["contest", id] }),
+            queryClient.invalidateQueries({ queryKey: ["contest-prizes", id] }),
+          ])
+          router.push(`/contests/${id}/workspace`)
+        }}
+      />
     </main>
   )
 }
