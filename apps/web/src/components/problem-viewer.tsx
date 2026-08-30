@@ -217,18 +217,18 @@ export function ProblemViewer({ problemSlug }: { problemSlug: string }) {
   return (
     <div className="flex h-screen flex-col">
       {/* Top bar */}
-      <div className="flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-sm px-4 py-2">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-background/80 backdrop-blur-sm px-4 py-2">
+        <div className="flex items-center gap-2 min-w-0">
           <Link
             href="/problems"
-            className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Library
           </Link>
-          <span className="text-muted-foreground/30">/</span>
-          <h1 className="text-sm font-semibold truncate max-w-xs">{problem.title}</h1>
-          <div className="flex items-center gap-1.5">
+          <span className="text-muted-foreground/30 shrink-0">/</span>
+          <h1 className="text-sm font-semibold truncate min-w-0">{problem.title}</h1>
+          <div className="flex items-center gap-1.5 shrink-0">
             <Badge tone={difficultyTone[problem.difficulty] ?? "neutral"} className="text-[10px] px-1.5 py-0">
               {difficultyLabel[problem.difficulty] ?? problem.difficulty}
             </Badge>
@@ -237,7 +237,7 @@ export function ProblemViewer({ problemSlug }: { problemSlug: string }) {
             </Badge>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
           <Badge tone="slate" className="text-[10px] px-1.5 py-0">{problem.points} pts</Badge>
           {problem.type === "coding" && (
             <>
@@ -253,9 +253,9 @@ export function ProblemViewer({ problemSlug }: { problemSlug: string }) {
       </div>
 
       {/* Main content - split view */}
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0 flex-col md:flex-row">
         {/* Left panel - Description */}
-        <div className="flex flex-col w-1/2 min-w-0 border-r border-border">
+        <div className="flex flex-col min-w-0 border-b md:border-b-0 md:border-r border-border md:w-1/2 max-h-[50vh] md:max-h-none">
           {/* Tabs */}
           <div className="flex items-center border-b border-border bg-muted/30">
             <button
@@ -346,7 +346,7 @@ export function ProblemViewer({ problemSlug }: { problemSlug: string }) {
         </div>
 
         {/* Right panel - Code Editor */}
-        <div className="flex flex-col w-1/2 min-w-0">
+        <div className="flex flex-col min-w-0 md:w-1/2 flex-1 min-h-0">
           {problem.type === "coding" ? (
             <>
               {/* Editor toolbar */}
