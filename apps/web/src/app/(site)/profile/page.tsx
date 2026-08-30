@@ -562,6 +562,7 @@ function SettingsTab({
               value={upi}
               onChange={(e) => setUpi(e.target.value)}
               autoComplete="off"
+              required
             />
             <FloatingInput
               id="bank"
