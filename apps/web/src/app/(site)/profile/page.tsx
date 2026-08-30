@@ -133,6 +133,29 @@ function OverviewTab({
   uploadAvatar: (f: File) => void
 }) {
   const fileRef = useRef<HTMLInputElement>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [previewFile, setPreviewFile] = useState<File | null>(null)
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]
+    if (!f) return
+    setPreviewFile(f)
+    setPreviewUrl(URL.createObjectURL(f))
+  }
+
+  function confirmUpload() {
+    if (previewFile) {
+      uploadAvatar(previewFile)
+    }
+    clearPreview()
+  }
+
+  function clearPreview() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(null)
+    setPreviewFile(null)
+    if (fileRef.current) fileRef.current.value = ""
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -169,10 +192,7 @@ function OverviewTab({
               accept="image/jpeg,image/png,image/webp"
               aria-label="Upload avatar"
               className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0]
-                if (f) void uploadAvatar(f)
-              }}
+              onChange={handleFileSelect}
             />
 
             <div className="flex-1 min-w-0">
@@ -228,6 +248,41 @@ function OverviewTab({
           </div>
         </CardContent>
       </Card>
+
+      {/* Avatar preview dialog */}
+      {previewUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={clearPreview}>
+          <div
+            className="w-full max-w-sm rounded-2xl border border-border bg-background p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold">Update profile photo</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Preview how your new avatar will look.
+            </p>
+            <div className="mt-4 flex justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewUrl}
+                alt="Avatar preview"
+                className="h-28 w-28 rounded-2xl object-cover ring-4 ring-orange-500/20"
+              />
+            </div>
+            <div className="mt-6 flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={clearPreview}>
+                Cancel
+              </Button>
+              <Button className="flex-1" onClick={confirmUpload} disabled={busy === "avatar"}>
+                {busy === "avatar" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Save photo"
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
