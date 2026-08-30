@@ -27,6 +27,7 @@ export interface IProblem extends Document {
   testCases: ITestCase[]
   options: string[] // mcq only
   correctAnswer: number | null // mcq only — 0-based index into options
+  mcqLayout: "grid" | "list" // mcq only — 2x2 grid or single-column list
   status: ProblemStatus
 }
 
@@ -157,6 +158,14 @@ const problemSchema = new Schema<IProblem>(
         validator: (v: number | null) => v === null || (Number.isInteger(v) && v >= 0),
         message: "correctAnswer must be a non-negative integer index or null",
       },
+    },
+    mcqLayout: {
+      type: String,
+      enum: {
+        values: ["grid", "list"],
+        message: "{VALUE} is not a valid MCQ layout",
+      },
+      default: "list",
     },
     status: {
       type: String,

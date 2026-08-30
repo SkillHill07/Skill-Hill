@@ -36,8 +36,20 @@ async function createSubmission(
 
   const isPracticeMode = input.mode === "run" || contest.status !== "active"
 
+  // Find the problem early to check type
+  const problemCheck = await Problem.findOne({ _id: input.problemId, contestId })
+  if (!problemCheck) {
+    throw Object.assign(new Error("Problem not found in this contest"), {
+      status: 404,
+      code: "PROBLEM_NOT_FOUND",
+    })
+  }
+
+  // MCQ problems can always be submitted in practice mode (no Docker, no participation check)
+  const isMcqPractice = problemCheck.type === "mcq" && isPracticeMode
+
   // For live contest submissions, require active status and participation
-  if (!isPracticeMode) {
+  if (!isPracticeMode && !isMcqPractice) {
     if (contest.status !== "active") {
       throw Object.assign(new Error("This contest is not accepting submissions"), {
         status: 400,
@@ -53,13 +65,7 @@ async function createSubmission(
     }
   }
 
-  const problem = await Problem.findOne({ _id: input.problemId, contestId })
-  if (!problem) {
-    throw Object.assign(new Error("Problem not found in this contest"), {
-      status: 404,
-      code: "PROBLEM_NOT_FOUND",
-    })
-  }
+  const problem = problemCheck
 
   let language: string | null = null
   if (problem.type === "mcq") {
