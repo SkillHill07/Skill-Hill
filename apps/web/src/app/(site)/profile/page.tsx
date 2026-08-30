@@ -1,8 +1,24 @@
 "use client"
 
+import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
 import { useEffect, useRef, useState } from "react"
-import { CheckCircle2, History, Settings, ShieldCheck, User, XCircle, Pencil } from "lucide-react"
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Camera,
+  CheckCircle2,
+  CreditCard,
+  History,
+  Loader2,
+  Pencil,
+  Settings,
+  ShieldCheck,
+  User,
+  Wallet,
+  XCircle,
+  Trophy,
+} from "lucide-react"
 import { api } from "@/lib/api"
 import { formatDate, inr } from "@/lib/format"
 import {
@@ -16,8 +32,9 @@ import {
 } from "@/components/ui"
 import { FloatingInput } from "@/components/ui/floating-input"
 import { RequireAuth } from "@/components/require-auth"
-import ProfileSetup from "@/components/kokonutui/avatar-picker"
 import { cn } from "@skillcontest/ui"
+
+/* ──────────────────────── types ──────────────────────── */
 
 interface Me {
   _id: string
@@ -37,6 +54,24 @@ interface KycStatus {
   hasBankAccount: boolean
   hasIfsc: boolean
   hasUpiId: boolean
+}
+
+interface Balance {
+  balance: number
+  locked: number
+  available: number
+  totalDeposited: number
+  totalWithdrawn: number
+  totalWon: number
+}
+
+interface Transaction {
+  _id: string
+  type: string
+  amount: number
+  status: string
+  description?: string
+  createdAt: string
 }
 
 interface ContestParticipation {
@@ -61,7 +96,7 @@ interface SubmissionHistory {
   createdAt: string
 }
 
-type Tab = "profile" | "activity" | "settings"
+type Tab = "overview" | "activity" | "wallet" | "settings"
 
 const KYC_TONES: Record<string, "neutral" | "green" | "amber" | "red"> = {
   pending: "amber",
@@ -70,12 +105,15 @@ const KYC_TONES: Record<string, "neutral" | "green" | "amber" | "red"> = {
 }
 
 const tabs: Array<{ key: Tab; label: string; icon: React.ReactNode }> = [
-  { key: "profile", label: "Profile", icon: <User className="h-4 w-4" /> },
+  { key: "overview", label: "Overview", icon: <User className="h-4 w-4" /> },
   { key: "activity", label: "Activity", icon: <History className="h-4 w-4" /> },
+  { key: "wallet", label: "Wallet", icon: <Wallet className="h-4 w-4" /> },
   { key: "settings", label: "Settings", icon: <Settings className="h-4 w-4" /> },
 ]
 
-function ProfileTab({
+/* ──────────────────────── Overview Tab ──────────────────────── */
+
+function OverviewTab({
   me,
   firstName,
   setFirstName,
@@ -84,7 +122,6 @@ function ProfileTab({
   busy,
   saveProfile,
   uploadAvatar,
-  onSelectAvatar,
 }: {
   me: Me
   firstName: string
@@ -94,53 +131,74 @@ function ProfileTab({
   busy: "profile" | "avatar" | "kyc" | null
   saveProfile: () => void
   uploadAvatar: (f: File) => void
-  onSelectAvatar: (id: number) => void
 }) {
   const fileRef = useRef<HTMLInputElement>(null)
-  const [showPicker, setShowPicker] = useState(false)
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Avatar picker */}
-      {showPicker && (
-        <ProfileSetup
-          onComplete={(data) => {
-            onSelectAvatar(data.avatarId)
-            setShowPicker(false)
-          }}
-          className="w-full"
-        />
-      )}
-
-      <Card>
-        <CardContent className="flex flex-col gap-4 p-5">
-          <div className="flex items-center gap-4">
+    <div className="flex flex-col gap-5">
+      {/* Profile card */}
+      <Card className="overflow-hidden">
+        {/* Cover gradient */}
+        <div className="h-24 bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500" />
+        <CardContent className="-mt-10 p-5">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+            {/* Avatar */}
             <button
               type="button"
-              onClick={() => setShowPicker(!showPicker)}
-              className="group relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-orange-600 text-2xl font-bold text-white cursor-pointer"
+              onClick={() => fileRef.current?.click()}
+              className="group relative -mt-12 flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-background bg-orange-600 text-2xl font-bold text-white shadow-lg transition-transform hover:scale-105 cursor-pointer"
             >
               {me.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={me.avatarUrl} alt={`${me.firstName}'s avatar`} className="h-full w-full object-cover" />
+                <img src={me.avatarUrl} alt="" className="h-full w-full object-cover" />
               ) : (
                 me.firstName?.[0] ?? "?"
               )}
-              <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-                <Pencil className="h-5 w-5 text-white" />
+              <span className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                <Camera className="h-5 w-5 text-white" />
               </span>
+              {busy === "avatar" && (
+                <span className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/60">
+                  <Loader2 className="h-5 w-5 text-white animate-spin" />
+                </span>
+              )}
             </button>
-            <div className="flex flex-col gap-1">
-              <p className="text-lg font-semibold">
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              aria-label="Upload avatar"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) void uploadAvatar(f)
+              }}
+            />
+
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl font-bold tracking-tight">
                 {me.firstName} {me.lastName}
-              </p>
+              </h2>
               <p className="text-sm text-muted-foreground">{me.email}</p>
-              <Badge tone={me.role === "admin" || me.role === "creator" ? "teal" : "neutral"}>
-                {me.role}
-              </Badge>
+              <div className="mt-1 flex items-center gap-2">
+                <Badge tone={me.role === "admin" || me.role === "creator" ? "teal" : "neutral"}>
+                  {me.role}
+                </Badge>
+                {me.phone && (
+                  <span className="text-xs text-muted-foreground">
+                    {me.phoneCountryCode} {me.phone}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
+        </CardContent>
+      </Card>
 
+      {/* Edit name */}
+      <Card>
+        <CardContent className="p-5">
+          <h3 className="mb-3 font-semibold text-sm">Personal info</h3>
           <div className="grid gap-3 sm:grid-cols-2">
             <FloatingInput
               id="fn"
@@ -159,34 +217,22 @@ function ProfileTab({
               onChange={(e) => setLastName(e.target.value)}
             />
           </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={saveProfile} loading={busy === "profile"}>
-              Save changes
+          <div className="mt-3">
+            <Button onClick={saveProfile} disabled={busy === "profile"}>
+              {busy === "profile" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Save changes"
+              )}
             </Button>
-            <Button variant="outline" onClick={() => fileRef.current?.click()} loading={busy === "avatar"}>
-              Upload photo
-            </Button>
-            <Button variant="ghost" onClick={() => setShowPicker(!showPicker)}>
-              Choose avatar
-            </Button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              aria-label="Upload avatar image"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0]
-                if (f) void uploadAvatar(f)
-              }}
-            />
           </div>
         </CardContent>
       </Card>
     </div>
   )
 }
+
+/* ──────────────────────── Activity Tab ──────────────────────── */
 
 function ActivityTab() {
   const { data: participations, isLoading: loadingParticipations } = useQuery({
@@ -201,9 +247,7 @@ function ActivityTab() {
     retry: false,
   })
 
-  const isLoading = loadingParticipations || loadingSubmissions
-
-  if (isLoading) {
+  if (loadingParticipations || loadingSubmissions) {
     return (
       <div className="space-y-3">
         <Skeleton className="h-20" />
@@ -213,34 +257,41 @@ function ActivityTab() {
     )
   }
 
-  const hasParticipations = participations && participations.length > 0
-  const hasSubmissions = submissions && submissions.length > 0
-
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {/* Contests */}
       <Card>
         <CardContent className="p-5">
-          <h3 className="mb-3 font-semibold">Contests joined</h3>
-          {!hasParticipations ? (
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="flex items-center gap-2 font-semibold">
+              <Trophy className="h-4 w-4 text-amber-500" />
+              Contests joined
+            </h3>
+            {participations && participations.length > 0 && (
+              <Badge tone="slate">{participations.length}</Badge>
+            )}
+          </div>
+          {!participations || participations.length === 0 ? (
             <EmptyState title="No contests yet" hint="Join a contest to see your history here." />
           ) : (
-            <ul className="divide-y divide-border">
+            <div className="space-y-2">
               {participations.map((p) => (
-                <li key={p._id} className="flex items-center justify-between py-3">
+                <Link
+                  key={p._id}
+                  href={`/contests/${p.contestId}`}
+                  className="flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-accent cursor-pointer"
+                >
                   <div className="min-w-0">
-                    <p className="truncate font-medium">{p.contest?.title ?? "Contest"}</p>
+                    <p className="truncate font-medium text-sm">{p.contest?.title ?? "Contest"}</p>
                     <p className="text-xs text-muted-foreground">{formatDate(p.joinedAt)}</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {p.rank && (
-                      <Badge tone="amber">#{p.rank}</Badge>
-                    )}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {p.rank && <Badge tone="amber">#{p.rank}</Badge>}
                     <span className="text-sm font-semibold tabular-nums">{p.totalScore} pts</span>
                   </div>
-                </li>
+                </Link>
               ))}
-            </ul>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -248,18 +299,26 @@ function ActivityTab() {
       {/* Submissions */}
       <Card>
         <CardContent className="p-5">
-          <h3 className="mb-3 font-semibold">Recent submissions</h3>
-          {!hasSubmissions ? (
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="font-semibold">Recent submissions</h3>
+            {submissions && submissions.length > 0 && (
+              <Badge tone="slate">{submissions.length}</Badge>
+            )}
+          </div>
+          {!submissions || submissions.length === 0 ? (
             <EmptyState title="No submissions yet" hint="Submit a solution to see it here." />
           ) : (
-            <ul className="divide-y divide-border">
+            <div className="space-y-2">
               {submissions.map((s) => (
-                <li key={s._id} className="flex items-center justify-between py-3">
-                  <div className="flex items-center gap-2 min-w-0">
+                <div
+                  key={s._id}
+                  className="flex items-center justify-between rounded-lg border border-border p-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
                     {s.status === "accepted" ? (
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" aria-hidden />
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
                     ) : (
-                      <XCircle className="h-4 w-4 shrink-0 text-red-500" aria-hidden />
+                      <XCircle className="h-4 w-4 shrink-0 text-red-500" />
                     )}
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{s.problem?.title ?? "Problem"}</p>
@@ -268,15 +327,15 @@ function ActivityTab() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <Badge tone={s.status === "accepted" ? "green" : "red"}>
                       {s.status}
                     </Badge>
                     <span className="text-sm tabular-nums">{s.totalScore} pts</span>
                   </div>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -284,13 +343,131 @@ function ActivityTab() {
   )
 }
 
+/* ──────────────────────── Wallet Tab ──────────────────────── */
+
+function WalletTab() {
+  const { data: balance, isLoading } = useQuery({
+    queryKey: ["wallet-balance"],
+    queryFn: () => api.get<Balance>("/wallet/balance"),
+    retry: false,
+  })
+
+  const { data: txns } = useQuery({
+    queryKey: ["wallet-transactions", 10],
+    queryFn: () => api.get<{ transactions: Transaction[] }>("/wallet/transactions?limit=10"),
+  })
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Balance cards */}
+      {isLoading ? (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+        </div>
+      ) : balance ? (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Card className="relative overflow-hidden">
+            <div className="absolute right-2 top-2 text-emerald-500/20">
+              <Wallet className="h-8 w-8" />
+            </div>
+            <CardContent className="p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Available</p>
+              <p className="mt-1 text-2xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                {inr(balance.available)}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="relative overflow-hidden">
+            <div className="absolute right-2 top-2 text-amber-500/20">
+              <CreditCard className="h-8 w-8" />
+            </div>
+            <CardContent className="p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Locked</p>
+              <p className="mt-1 text-2xl font-bold tabular-nums">{inr(balance.locked)}</p>
+            </CardContent>
+          </Card>
+          <Card className="relative overflow-hidden">
+            <div className="absolute right-2 top-2 text-orange-500/20">
+              <Trophy className="h-8 w-8" />
+            </div>
+            <CardContent className="p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Total won</p>
+              <p className="mt-1 text-2xl font-bold tabular-nums">{inr(balance.totalWon)}</p>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
+
+      {/* Quick actions */}
+      <div className="flex gap-2">
+        <Link href="/wallet" className="flex-1">
+          <Button variant="outline" className="w-full" size="sm">
+            <ArrowDownLeft className="h-4 w-4" /> Deposit
+          </Button>
+        </Link>
+        <Link href="/wallet" className="flex-1">
+          <Button variant="outline" className="w-full" size="sm">
+            <ArrowUpRight className="h-4 w-4" /> Withdraw
+          </Button>
+        </Link>
+      </div>
+
+      {/* Recent transactions */}
+      <Card>
+        <CardContent className="p-5">
+          <h3 className="mb-4 font-semibold">Recent transactions</h3>
+          {txns && txns.transactions.length > 0 ? (
+            <div className="space-y-2">
+              {txns.transactions.map((t) => (
+                <div
+                  key={t._id}
+                  className="flex items-center justify-between rounded-lg border border-border p-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", t.amount > 0 ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500")}>
+                      {t.amount > 0 ? (
+                        <ArrowDownLeft className="h-4 w-4" />
+                      ) : (
+                        <ArrowUpRight className="h-4 w-4" />
+                      )}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium capitalize">{t.type.replace(/_/g, " ")}</p>
+                      <p className="text-xs text-muted-foreground">{formatDate(t.createdAt)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge tone={t.status === "completed" ? "green" : t.status === "pending" ? "amber" : "neutral"}>
+                      {t.status}
+                    </Badge>
+                    <span className={cn("text-sm font-semibold tabular-nums", t.amount > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-foreground")}>
+                      {t.amount > 0 ? "+" : ""}{inr(Math.abs(t.amount))}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState title="No transactions yet" hint="Deposit or join a contest to see transactions." />
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+/* ──────────────────────── Settings Tab ──────────────────────── */
+
 function SettingsTab({
-  me,
   phone,
   setPhone,
+  phoneError,
   kyc,
   pan,
   setPan,
+  panError,
   bankAccount,
   setBankAccount,
   ifsc,
@@ -301,12 +478,13 @@ function SettingsTab({
   saveProfile,
   saveKyc,
 }: {
-  me: Me
   phone: string
   setPhone: (v: string) => void
+  phoneError: string | null
   kyc: KycStatus | undefined
   pan: string
   setPan: (v: string) => void
+  panError: string | null
   bankAccount: string
   setBankAccount: (v: string) => void
   ifsc: string
@@ -318,11 +496,14 @@ function SettingsTab({
   saveKyc: () => void
 }) {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {/* Phone */}
       <Card>
-        <CardContent className="flex flex-col gap-4 p-5">
-          <h3 className="font-semibold">Phone number</h3>
+        <CardContent className="p-5">
+          <h3 className="mb-3 font-semibold text-sm">Phone number</h3>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Used for account recovery and notifications.
+          </p>
           <div className="max-w-sm">
             <FloatingInput
               id="ph"
@@ -332,11 +513,12 @@ function SettingsTab({
               label="Phone"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              error={phoneError ?? undefined}
             />
           </div>
-          <div>
-            <Button onClick={saveProfile} loading={busy === "profile"}>
-              Save phone
+          <div className="mt-3">
+            <Button onClick={saveProfile} disabled={busy === "profile"}>
+              {busy === "profile" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save phone"}
             </Button>
           </div>
         </CardContent>
@@ -344,19 +526,19 @@ function SettingsTab({
 
       {/* KYC */}
       <Card>
-        <CardContent className="flex flex-col gap-4 p-5">
+        <CardContent className="p-5">
           <div className="flex items-center justify-between">
-            <h3 className="flex items-center gap-2 font-semibold">
-              <ShieldCheck className="h-4 w-4 text-emerald-500" aria-hidden /> KYC verification
+            <h3 className="flex items-center gap-2 font-semibold text-sm">
+              <ShieldCheck className="h-4 w-4 text-emerald-500" /> KYC verification
             </h3>
             {kyc && <Badge tone={KYC_TONES[kyc.kycStatus] ?? "neutral"}>{kyc.kycStatus}</Badge>}
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="mt-1 mb-4 text-xs text-muted-foreground">
             Required to withdraw winnings. All fields are encrypted at rest.
           </p>
 
           {kyc && (
-            <div className="flex flex-wrap gap-2 text-xs">
+            <div className="flex flex-wrap gap-2 text-xs mb-4">
               <Badge tone={kyc.hasPan ? "green" : "neutral"}>PAN {kyc.hasPan ? "✓" : "—"}</Badge>
               <Badge tone={kyc.hasBankAccount ? "green" : "neutral"}>Bank {kyc.hasBankAccount ? "✓" : "—"}</Badge>
               <Badge tone={kyc.hasIfsc ? "green" : "neutral"}>IFSC {kyc.hasIfsc ? "✓" : "—"}</Badge>
@@ -367,11 +549,12 @@ function SettingsTab({
           <div className="grid gap-3 sm:grid-cols-2">
             <FloatingInput
               id="pan"
-              label="PAN number"
+              label="PAN number (ABCDE1234F)"
               value={pan}
-              onChange={(e) => setPan(e.target.value)}
+              onChange={(e) => setPan(e.target.value.toUpperCase())}
               maxLength={10}
               autoComplete="off"
+              error={panError ?? undefined}
             />
             <FloatingInput
               id="upi"
@@ -392,20 +575,24 @@ function SettingsTab({
               id="ifsc"
               label="IFSC code"
               value={ifsc}
-              onChange={(e) => setIfsc(e.target.value)}
+              onChange={(e) => setIfsc(e.target.value.toUpperCase())}
               maxLength={11}
               autoComplete="off"
             />
           </div>
 
-          <Button variant="secondary" onClick={saveKyc} loading={busy === "kyc"}>
-            Submit for verification
-          </Button>
+          <div className="mt-3">
+            <Button variant="secondary" onClick={saveKyc} disabled={busy === "kyc"}>
+              {busy === "kyc" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit for verification"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
   )
 }
+
+/* ──────────────────────── Main Profile ──────────────────────── */
 
 function ProfileInner() {
   const { data: me, isLoading, refetch } = useQuery({
@@ -420,7 +607,7 @@ function ProfileInner() {
     retry: false,
   })
 
-  const [tab, setTab] = useState<Tab>("profile")
+  const [tab, setTab] = useState<Tab>("overview")
 
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
@@ -435,6 +622,8 @@ function ProfileInner() {
   const [busy, setBusy] = useState<"profile" | "avatar" | "kyc" | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [panError, setPanError] = useState<string | null>(null)
+  const [phoneError, setPhoneError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!me || syncedUserId === me._id) return
@@ -448,6 +637,7 @@ function ProfileInner() {
     setBusy("profile")
     setError(null)
     setNotice(null)
+    setPhoneError(null)
     try {
       const form = new FormData()
       form.append("firstName", firstName)
@@ -457,7 +647,12 @@ function ProfileInner() {
       setNotice("Profile updated")
       refetch()
     } catch (err) {
-      setError((err as Error).message)
+      const msg = (err as Error).message
+      if (msg.toLowerCase().includes("phone")) {
+        setPhoneError(msg)
+      } else {
+        setError(msg)
+      }
     } finally {
       setBusy(null)
     }
@@ -483,6 +678,15 @@ function ProfileInner() {
     setBusy("kyc")
     setError(null)
     setNotice(null)
+    setPanError(null)
+
+    // Client-side PAN validation
+    if (pan.trim() && !/^[A-Z]{5}\d{4}[A-Z]{1}$/.test(pan.trim().toUpperCase())) {
+      setPanError("Invalid PAN format. Expected: ABCDE1234F")
+      setBusy(null)
+      return
+    }
+
     try {
       const body: Record<string, string> = {}
       if (pan.trim()) body.panNumber = pan.trim().toUpperCase()
@@ -493,7 +697,12 @@ function ProfileInner() {
       setNotice("KYC details submitted for verification")
       refetchKyc()
     } catch (err) {
-      setError((err as Error).message)
+      const msg = (err as Error).message
+      if (msg.toLowerCase().includes("pan")) {
+        setPanError(msg)
+      } else {
+        setError(msg)
+      }
     } finally {
       setBusy(null)
     }
@@ -501,53 +710,14 @@ function ProfileInner() {
 
   if (isLoading || !me) {
     return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-10">
+      <div className="mx-auto w-full max-w-4xl px-4 py-10">
         <Skeleton className="h-72" />
       </div>
     )
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-10">
-      {/* Header */}
-      <div className="mb-6 flex items-center gap-3">
-        <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-orange-600 text-lg font-bold text-white">
-          {me.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={me.avatarUrl} alt="" className="h-full w-full object-cover" />
-          ) : (
-            me.firstName?.[0] ?? "?"
-          )}
-        </span>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {me.firstName} {me.lastName}
-          </h1>
-          <p className="text-sm text-muted-foreground">{me.email}</p>
-        </div>
-      </div>
-
-      {/* Tab bar */}
-      <div role="tablist" aria-label="Profile sections" className="mb-6 flex items-center gap-1 border-b border-border">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            role="tab"
-            aria-selected={tab === t.key}
-            onClick={() => setTab(t.key)}
-            className={cn(
-              "-mb-px flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer",
-              tab === t.key
-                ? "border-orange-600 text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {t.icon}
-            {t.label}
-          </button>
-        ))}
-      </div>
-
+    <div className="mx-auto w-full max-w-4xl px-4 py-8">
       {/* Notices */}
       {error && (
         <div className="mb-4">
@@ -563,9 +733,30 @@ function ProfileInner() {
         </div>
       )}
 
+      {/* Tab bar */}
+      <div role="tablist" aria-label="Profile sections" className="mb-6 flex items-center gap-1 border-b border-border overflow-x-auto">
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            role="tab"
+            aria-selected={tab === t.key}
+            onClick={() => setTab(t.key)}
+            className={cn(
+              "-mb-px flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap cursor-pointer",
+              tab === t.key
+                ? "border-orange-600 text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {t.icon}
+            {t.label}
+          </button>
+        ))}
+      </div>
+
       {/* Tab content */}
-      {tab === "profile" && (
-        <ProfileTab
+      {tab === "overview" && (
+        <OverviewTab
           me={me}
           firstName={firstName}
           setFirstName={setFirstName}
@@ -574,23 +765,22 @@ function ProfileInner() {
           busy={busy}
           saveProfile={saveProfile}
           uploadAvatar={uploadAvatar}
-          onSelectAvatar={(id) => {
-            // Store selected avatar ID; a real implementation would POST to API
-            setNotice(`Avatar ${id} selected — save changes to apply`)
-          }}
         />
       )}
 
       {tab === "activity" && <ActivityTab />}
 
+      {tab === "wallet" && <WalletTab />}
+
       {tab === "settings" && (
         <SettingsTab
-          me={me}
           phone={phone}
           setPhone={setPhone}
+          phoneError={phoneError}
           kyc={kyc}
           pan={pan}
           setPan={setPan}
+          panError={panError}
           bankAccount={bankAccount}
           setBankAccount={setBankAccount}
           ifsc={ifsc}
