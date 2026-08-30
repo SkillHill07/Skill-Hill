@@ -107,7 +107,7 @@ function DashboardInner() {
                 <Wallet className="h-4 w-4 text-orange-500" aria-hidden /> Recent transactions
               </h2>
               <Link
-                href="/wallet"
+                href="/profile?tab=wallet"
                 className="flex items-center gap-1 text-sm font-medium text-orange-600 hover:underline dark:text-orange-400"
               >
                 View all <ArrowRight className="h-3.5 w-3.5" aria-hidden />
@@ -157,7 +157,7 @@ function DashboardInner() {
             <Link href="/contests" className="flex items-center justify-between rounded-lg border border-border px-4 py-3 text-sm font-medium transition-colors hover:bg-accent">
               Browse contests <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
-            <Link href="/wallet" className="flex items-center justify-between rounded-lg border border-border px-4 py-3 text-sm font-medium transition-colors hover:bg-accent">
+            <Link href="/profile?tab=wallet" className="flex items-center justify-between rounded-lg border border-border px-4 py-3 text-sm font-medium transition-colors hover:bg-accent">
               Add funds <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
             <Link href="/problems" className="flex items-center justify-between rounded-lg border border-border px-4 py-3 text-sm font-medium transition-colors hover:bg-accent">

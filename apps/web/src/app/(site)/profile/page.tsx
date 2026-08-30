@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
-import { useEffect, useRef, useState } from "react"
+import { Suspense, useEffect, useRef, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -457,14 +458,9 @@ function WalletTab() {
 
       {/* Quick actions */}
       <div className="flex gap-2">
-        <Link href="/wallet" className="flex-1">
+        <Link href="/profile?tab=wallet" className="flex-1">
           <Button variant="outline" className="w-full" size="sm">
-            <ArrowDownLeft className="h-4 w-4" /> Deposit
-          </Button>
-        </Link>
-        <Link href="/wallet" className="flex-1">
-          <Button variant="outline" className="w-full" size="sm">
-            <ArrowUpRight className="h-4 w-4" /> Withdraw
+            <ArrowDownLeft className="h-4 w-4" /> View transactions
           </Button>
         </Link>
       </div>
@@ -651,6 +647,9 @@ function SettingsTab({
 /* ──────────────────────── Main Profile ──────────────────────── */
 
 function ProfileInner() {
+  const searchParams = useSearchParams()
+  const initialTab = (searchParams.get("tab") as Tab) || "overview"
+
   const { data: me, isLoading, refetch } = useQuery({
     queryKey: ["me"],
     queryFn: () => api.get<Me>("/auth/me"),
@@ -663,7 +662,7 @@ function ProfileInner() {
     retry: false,
   })
 
-  const [tab, setTab] = useState<Tab>("overview")
+  const [tab, setTab] = useState<Tab>(initialTab)
 
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
@@ -855,7 +854,9 @@ function ProfileInner() {
 export default function ProfilePage() {
   return (
     <RequireAuth>
-      <ProfileInner />
+      <Suspense fallback={null}>
+        <ProfileInner />
+      </Suspense>
     </RequireAuth>
   )
 }

@@ -70,7 +70,7 @@ export function Navbar() {
           <ThemeToggle />
           {me ? (
             <>
-              <Link href="/wallet" className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+              <Link href="/profile?tab=wallet" className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
                 <Wallet className="h-4 w-4" aria-hidden />
                 Wallet
               </Link>
