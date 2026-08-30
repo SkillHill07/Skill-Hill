@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useCallback, useRef, useState } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,7 @@ import {
 import { api } from "@/lib/api"
 import { inr } from "@/lib/format"
 import { useMe } from "@/hooks/use-me"
+import { useToast } from "@/components/ui/toast"
 
 interface JoinContestDialogProps {
   open: boolean
@@ -96,7 +97,9 @@ export function JoinContestDialog({
   const { data: me } = useMe()
   const [step, setStep] = useState<DialogStep>("balance")
   const [error, setError] = useState<string | null>(null)
-  const [depositAmount, setDepositAmount] = useState("")
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
+  const balanceBefore = useRef<number | null>(null)
 
   const { data: balance } = useQuery<Balance>({
     queryKey: ["wallet-balance"],
@@ -114,30 +117,59 @@ export function JoinContestDialog({
     if (!value) {
       setStep("balance")
       setError(null)
-      setDepositAmount("")
     }
     onOpenChange(value)
   }
+
+  /** Poll wallet balance after Razorpay checkout. Show toast + join on success. */
+  const pollForPayment = useCallback(
+    (amountPaise: number) => {
+      balanceBefore.current = balance?.available ?? 0
+      let attempts = 0
+      const maxAttempts = 20
+      const poll = setInterval(async () => {
+        attempts++
+        try {
+          const fresh = await api.get<Balance>("/wallet/balance")
+          if (fresh.available > (balanceBefore.current ?? 0)) {
+            clearInterval(poll)
+            toast({
+              variant: "success",
+              title: "Payment received!",
+              description: `${inr(amountPaise)} credited. Joining contest…`,
+            })
+            void queryClient.invalidateQueries({ queryKey: ["wallet-balance"] })
+            // Auto-join the contest now that wallet is funded
+            handleDirectJoin()
+          }
+        } catch {
+          // ignore
+        }
+        if (attempts >= maxAttempts) {
+          clearInterval(poll)
+          setError("Payment is still processing. Please wait a moment and try joining again.")
+          setStep("balance")
+        }
+      }, 2000)
+    },
+    [balance, toast, queryClient],
+  )
 
   async function handlePayAndJoin() {
     setError(null)
     setStep("processing")
 
     try {
-      // Create order for contest entry
       const order = await api.post<Order>("/payments/create-order", {
         amount: entryFee,
         purpose: "contest",
         contestId,
       })
 
-      // Open Razorpay
       await openRazorpayCheckout(order, `Entry fee — ${contestTitle}`)
 
-      // After Razorpay opens, show processing state
-      // The webhook will credit the wallet, then user can join
-      setStep("success")
-      onSuccess?.()
+      // Razorpay closed — poll for balance change
+      pollForPayment(entryFee)
     } catch (err) {
       setError((err as Error).message)
       setStep("payment")

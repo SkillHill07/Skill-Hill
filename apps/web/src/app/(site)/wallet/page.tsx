@@ -1,7 +1,7 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
-import { useState } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useCallback, useRef, useState } from "react"
 import { ArrowDownLeft, ArrowUpRight, Wallet as WalletIcon } from "lucide-react"
 import { api, getTurnstileToken } from "@/lib/api"
 import { formatDate, inr } from "@/lib/format"
@@ -18,6 +18,7 @@ import {
 import { FloatingInput } from "@/components/ui/floating-input"
 import { Turnstile } from "@/components/turnstile"
 import { RequireAuth } from "@/components/require-auth"
+import { useToast } from "@/components/ui/toast"
 
 interface Balance {
   userId: string
@@ -97,6 +98,9 @@ function WalletInner() {
   const [busy, setBusy] = useState<"deposit" | "withdraw" | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
+  const balanceBeforeDeposit = useRef<number | null>(null)
 
   const {
     data: balance,
@@ -112,6 +116,41 @@ function WalletInner() {
     queryKey: ["wallet-transactions", 25],
     queryFn: () => api.get<TransactionsResponse>("/wallet/transactions?limit=25"),
   })
+
+  /** Poll wallet balance after Razorpay checkout closes. Shows toast on success. */
+  const pollForDeposit = useCallback(
+    (amountPaise: number) => {
+      balanceBeforeDeposit.current = balance?.available ?? 0
+      let attempts = 0
+      const maxAttempts = 20
+      const poll = setInterval(async () => {
+        attempts++
+        try {
+          const fresh = await api.get<Balance>("/wallet/balance")
+          if (fresh.available > (balanceBeforeDeposit.current ?? 0)) {
+            clearInterval(poll)
+            const credited = fresh.available - (balanceBeforeDeposit.current ?? 0)
+            toast({
+              variant: "success",
+              title: "Payment successful!",
+              description: `${inr(credited)} has been credited to your wallet.`,
+            })
+            setNotice(null)
+            setDepositAmount("")
+            void queryClient.invalidateQueries({ queryKey: ["wallet-balance"] })
+            void queryClient.invalidateQueries({ queryKey: ["wallet-transactions"] })
+          }
+        } catch {
+          // ignore poll errors
+        }
+        if (attempts >= maxAttempts) {
+          clearInterval(poll)
+          setNotice("Payment processing may take a few more minutes. Check your wallet balance shortly.")
+        }
+      }, 2000)
+    },
+    [balance, toast, queryClient],
+  )
 
   async function deposit() {
     const paise = toPaise(depositAmount)
@@ -130,7 +169,9 @@ function WalletInner() {
       const order = await api.post<Order>("/wallet/deposit", { amount: paise })
       setNotice("Opening Razorpay checkout…")
       await openRazorpayCheckout(order)
-      setNotice("If the payment was completed, your wallet will be credited shortly.")
+      // Razorpay checkout closed — start polling for balance change
+      setNotice("Processing payment…")
+      pollForDeposit(paise)
     } catch (err) {
       setError((err as Error).message)
     } finally {
