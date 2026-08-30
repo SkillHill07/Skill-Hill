@@ -9,6 +9,7 @@ export interface IContest extends Document {
   startTime: Date
   endTime: Date
   type: ContestType // "free" forces entryFee = 0
+  problemType: "coding" | "mcq" | "mixed"
   entryFee: number // paise (2000 = ₹20)
   prizePool: number // paise
   maxParticipants: number | null
@@ -59,6 +60,14 @@ const contestSchema = new Schema<IContest>(
         message: "{VALUE} is not a valid contest type",
       },
       default: "free",
+    },
+    problemType: {
+      type: String,
+      enum: {
+        values: ["coding", "mcq", "mixed"],
+        message: "{VALUE} is not a valid problem type",
+      },
+      default: "coding",
     },
     entryFee: {
       type: Number,

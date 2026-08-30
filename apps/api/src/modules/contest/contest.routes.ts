@@ -54,10 +54,11 @@ contestRouter.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const status = (req.query.status as string) || undefined
+      const problemType = (req.query.problemType as string) || undefined
       const page = req.query.page ? parseInt(req.query.page as string, 10) : 1
       const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20
       // Validate via the schema to keep the same error shape
-      const parsed = listContestsSchema.safeParse({ query: { status, page, limit } })
+      const parsed = listContestsSchema.safeParse({ query: { status, problemType, page, limit } })
       if (!parsed.success) {
         const msg = parsed.error.errors[0]?.message ?? "Invalid query"
         throw Object.assign(new Error(msg), { status: 400, code: "VALIDATION_ERROR" })

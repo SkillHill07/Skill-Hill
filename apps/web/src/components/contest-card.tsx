@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Users } from "lucide-react"
+import { Code2, ListChecks, Users } from "lucide-react"
 import { ContestStatusBadge } from "./status-badge"
 import { Badge, Card, CardContent } from "./ui"
 import { formatDate, inr } from "@/lib/format"
@@ -9,6 +9,7 @@ export interface ContestCardData {
   title: string
   slug: string
   type: string
+  problemType?: string
   entryFee: number
   prizePool: number
   maxParticipants: number | null
@@ -26,7 +27,18 @@ export function ContestCard({ contest, participants }: { contest: ContestCardDat
       <Card className="transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-orange-300 group-hover:shadow-md dark:group-hover:border-orange-500/50">
         <CardContent className="flex flex-col gap-3 p-5">
           <div className="flex items-center justify-between gap-2">
-            <ContestStatusBadge status={contest.status} />
+            <div className="flex items-center gap-1.5">
+              <ContestStatusBadge status={contest.status} />
+              {contest.problemType === "mcq" && (
+                <Badge tone="amber"><ListChecks className="h-3 w-3" /> MCQ</Badge>
+              )}
+              {contest.problemType === "coding" && (
+                <Badge tone="blue"><Code2 className="h-3 w-3" /> Coding</Badge>
+              )}
+              {contest.problemType === "mixed" && (
+                <Badge tone="teal"><Code2 className="h-3 w-3" /> Mixed</Badge>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               {contest.type === "paid" && (
                 <Badge tone="teal">{inr(contest.entryFee)} entry</Badge>

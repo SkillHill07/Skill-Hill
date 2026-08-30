@@ -80,6 +80,9 @@ async function listContests(
   }
 
   const query: Record<string, unknown> = {}
+  if (filters.problemType) {
+    query.problemType = filters.problemType
+  }
   if (requestedStatus === "active") {
     query.status = "active"
     query.startTime = { $lte: now }

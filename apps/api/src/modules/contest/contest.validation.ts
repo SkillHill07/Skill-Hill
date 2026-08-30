@@ -145,6 +145,9 @@ export const listContestsSchema = z.object({
     status: z.enum(["active", "upcoming", "settled", "frozen", "cancelled", "draft"], {
       errorMap: () => ({ message: "Status must be one of: active, upcoming, settled, frozen, cancelled, draft" }),
     }).optional(),
+    problemType: z.enum(["coding", "mcq", "mixed"], {
+      errorMap: () => ({ message: "problemType must be coding, mcq, or mixed" }),
+    }).optional(),
     page: z.coerce.number().int().positive().default(1),
     limit: z.coerce.number().int().positive().max(100).default(20),
   }),
