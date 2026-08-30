@@ -33,19 +33,24 @@ async function createSubmission(
       code: "CONTEST_NOT_FOUND",
     })
   }
-  if (contest.status !== "active") {
-    throw Object.assign(new Error("This contest is not accepting submissions"), {
-      status: 400,
-      code: "CONTEST_NOT_ACTIVE",
-    })
-  }
 
-  const participation = await Participation.findOne({ userId, contestId })
-  if (!participation) {
-    throw Object.assign(new Error("Join the contest before submitting"), {
-      status: 403,
-      code: "NOT_JOINED",
-    })
+  const isPracticeMode = input.mode === "run" || contest.status !== "active"
+
+  // For live contest submissions, require active status and participation
+  if (!isPracticeMode) {
+    if (contest.status !== "active") {
+      throw Object.assign(new Error("This contest is not accepting submissions"), {
+        status: 400,
+        code: "CONTEST_NOT_ACTIVE",
+      })
+    }
+    const participation = await Participation.findOne({ userId, contestId })
+    if (!participation) {
+      throw Object.assign(new Error("Join the contest before submitting"), {
+        status: 403,
+        code: "NOT_JOINED",
+      })
+    }
   }
 
   const problem = await Problem.findOne({ _id: input.problemId, contestId })
@@ -90,8 +95,10 @@ async function createSubmission(
     language,
     code: input.code,
     // Runs are a coding-problem affordance; MCQs are always scored submits.
+    // Practice mode submissions (non-active contest or explicit run mode) don't affect leaderboard.
     mode: problem.type === "mcq" ? "submit" : (input.mode ?? "submit"),
     status: "pending",
+    practice: isPracticeMode,
   })
 
   await enqueueSubmission(submission._id.toString())

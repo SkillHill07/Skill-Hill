@@ -22,6 +22,8 @@ export interface ISubmission extends Document {
   code: string
   /** "run" = public test cases only, no leaderboard effect. "submit" = full judge. */
   mode: "run" | "submit"
+  /** Practice mode: contest not active or explicit run — no leaderboard scoring. */
+  practice: boolean
   status: SubmissionStatus
   testResults: ITestResult[]
   publicPassed: number
@@ -99,6 +101,10 @@ const submissionSchema = new Schema<ISubmission>(
         message: "{VALUE} is not a valid submission mode",
       },
       default: "submit",
+    },
+    practice: {
+      type: Boolean,
+      default: false,
     },
     status: {
       type: String,

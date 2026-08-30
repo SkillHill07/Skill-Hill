@@ -289,8 +289,8 @@ export default function HomePage() {
             className="mt-4 grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3"
           >
             <Card className="relative overflow-hidden p-5 border-border/60 bg-card/80 backdrop-blur-sm">
-              <div className="absolute -right-3 -top-3 flex h-10 w-10 items-center justify-center rounded-full bg-orange-600/10 text-orange-600 dark:text-orange-400">
-                <Trophy className="h-5 w-5" aria-hidden />
+              <div className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg bg-orange-600/10 text-orange-600 dark:text-orange-400">
+                <Trophy className="h-4 w-4" aria-hidden />
               </div>
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Contests hosted
@@ -300,8 +300,8 @@ export default function HomePage() {
               </p>
             </Card>
             <Card className="relative overflow-hidden p-5 border-border/60 bg-card/80 backdrop-blur-sm">
-              <div className="absolute -right-3 -top-3 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600/10 text-emerald-600 dark:text-emerald-400">
-                <Wallet className="h-5 w-5" aria-hidden />
+              <div className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600/10 text-emerald-600 dark:text-emerald-400">
+                <Wallet className="h-4 w-4" aria-hidden />
               </div>
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Live prize pool
@@ -311,8 +311,8 @@ export default function HomePage() {
               </p>
             </Card>
             <Card className="relative overflow-hidden p-5 border-border/60 bg-card/80 backdrop-blur-sm">
-              <div className="absolute -right-3 -top-3 flex h-10 w-10 items-center justify-center rounded-full bg-blue-600/10 text-blue-600 dark:text-blue-400">
-                <Code2 className="h-5 w-5" aria-hidden />
+              <div className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600/10 text-blue-600 dark:text-blue-400">
+                <Code2 className="h-4 w-4" aria-hidden />
               </div>
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Entry fee
