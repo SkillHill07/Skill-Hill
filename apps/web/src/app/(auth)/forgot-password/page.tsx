@@ -4,7 +4,8 @@ import Link from "next/link"
 import { useState } from "react"
 import { KeyRound } from "lucide-react"
 import { api, getTurnstileToken } from "@/lib/api"
-import { Button, Card, CardContent, ErrorBanner, Input, Label } from "@/components/ui"
+import { Button, Card, CardContent, ErrorBanner } from "@/components/ui"
+import { FloatingInput } from "@/components/ui/floating-input"
 import { Turnstile } from "@/components/turnstile"
 
 export default function ForgotPasswordPage() {
@@ -48,18 +49,16 @@ export default function ForgotPasswordPage() {
             </p>
           ) : (
             <form onSubmit={submit} className="flex flex-col gap-3">
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
+              <FloatingInput
+                id="email"
+                name="email"
+                type="email"
+                label="Email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
 
               <Turnstile onToken={setTurnstileToken} />
 

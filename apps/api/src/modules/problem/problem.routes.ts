@@ -24,6 +24,7 @@ import {
   listContestProblemsSchema,
   getContestProblemSchema,
   getPracticeProblemSchema,
+  getPracticeProblemBySlugSchema,
 } from "./problem.validation.js"
 import type { Request, Response, NextFunction } from "express"
 
@@ -125,6 +126,38 @@ practiceProblemRouter.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const problem = await problemService.getPracticeProblem(req.params.id as string)
+      sendSuccess(res, problem)
+    } catch (err) {
+      next(err)
+    }
+  },
+)
+
+/**
+ * @openapi
+ * /problems/slug/{slug}:
+ *   get:
+ *     tags: [Problems]
+ *     summary: Lookup a practice problem by slug
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Problem details
+ *       404:
+ *         description: Problem not found
+ */
+practiceProblemRouter.get(
+  "/slug/:slug",
+  optionalAuth,
+  validateRequest(getPracticeProblemBySlugSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const problem = await problemService.getPracticeProblemBySlug(req.params.slug as string)
       sendSuccess(res, problem)
     } catch (err) {
       next(err)

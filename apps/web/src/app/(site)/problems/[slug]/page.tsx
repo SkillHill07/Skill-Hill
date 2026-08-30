@@ -12,12 +12,12 @@ interface ProblemMeta {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 }): Promise<Metadata> {
-  const { id } = await params
+  const { slug } = await params
   let problem: ProblemMeta | null = null
   try {
-    const res = await fetch(`${API_URL}/problems/${id}`, { cache: "no-store" })
+    const res = await fetch(`${API_URL}/problems/slug/${slug}`, { cache: "no-store" })
     const body = (await res.json()) as { success?: boolean; data?: ProblemMeta }
     if (res.ok && body?.success && body.data) problem = body.data
   } catch {
@@ -34,7 +34,7 @@ export async function generateMetadata({
     description:
       problem.description?.replace(/[#*`>]/g, "").slice(0, 155) ??
       `Practice problem: read the statement, check examples, and study the starter template.`,
-    alternates: { canonical: `/problems/${id}` },
+    alternates: { canonical: `/problems/${slug}` },
     openGraph: { title: `${problem.title}${difficulty} · SkillHill`, type: "article" },
   }
 }
@@ -42,8 +42,8 @@ export async function generateMetadata({
 export default async function ProblemDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 }) {
-  const { id } = await params
-  return <ProblemViewer problemId={id} />
+  const { slug } = await params
+  return <ProblemViewer problemSlug={slug} />
 }

@@ -1,20 +1,12 @@
 "use client"
 
 import Link from "next/link"
-
 import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 import { Github, UserPlus } from "lucide-react"
 import { api, getTurnstileToken } from "@/lib/api"
-import {
-  Button,
-  Card,
-  CardContent,
-  ErrorBanner,
-  Input,
-  Label,
-  anchorButtonClasses,
-} from "@/components/ui"
+import { Button, Card, CardContent, ErrorBanner, anchorButtonClasses } from "@/components/ui"
+import { FloatingInput } from "@/components/ui/floating-input"
 import { Turnstile } from "@/components/turnstile"
 
 interface OAuthUrl {
@@ -103,47 +95,41 @@ export default function RegisterPage() {
 
           <form onSubmit={submit} className="flex flex-col gap-3">
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="fn">First name</Label>
-                <Input
-                  id="fn"
-                  name="firstName"
-                  autoComplete="given-name"
-                  required
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="ln">Last name</Label>
-                <Input
-                  id="ln"
-                  name="lastName"
-                  autoComplete="family-name"
-                  required
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
+              <FloatingInput
+                id="fn"
+                name="firstName"
+                label="First name"
+                autoComplete="given-name"
                 required
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
+              <FloatingInput
+                id="ln"
+                name="lastName"
+                label="Last name"
+                autoComplete="family-name"
+                required
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
               />
             </div>
+            <FloatingInput
+              id="email"
+              name="email"
+              type="email"
+              label="Email"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
             <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
+              <FloatingInput
                 id="password"
                 name="password"
                 type="password"
+                label="Password (min 8 characters)"
                 required
                 minLength={8}
                 autoComplete="new-password"

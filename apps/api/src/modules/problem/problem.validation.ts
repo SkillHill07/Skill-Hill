@@ -162,6 +162,12 @@ export const getPracticeProblemSchema = z.object({
   }),
 })
 
+export const getPracticeProblemBySlugSchema = z.object({
+  params: z.object({
+    slug: z.string().min(1).max(200),
+  }),
+})
+
 export const uploadProblemImageSchema = z.object({
   params: z.object({
     contestId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid contest id"),

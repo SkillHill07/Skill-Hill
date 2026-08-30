@@ -29,6 +29,14 @@ const footerNav = [
       { href: "/login", label: "Sign in" },
     ],
   },
+  {
+    heading: "Legal",
+    links: [
+      { href: "/contact", label: "Contact us" },
+      { href: "/privacy", label: "Privacy policy" },
+      { href: "/terms", label: "Terms & conditions" },
+    ],
+  },
 ]
 
 export function Footer() {

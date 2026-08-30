@@ -154,7 +154,7 @@ export function ProblemsExplorer({
       ) : data && data.problems.length > 0 ? (
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data.problems.map((p) => (
-            <Link key={p._id} href={`/problems/${p._id}`} className="group block">
+            <Link key={p._id} href={`/problems/${p.slug}`} className="group block">
               <Card className="h-full transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-orange-300 group-hover:shadow-md dark:group-hover:border-orange-500/50">
                 <CardContent className="flex h-full flex-col gap-3 p-5">
                   <div className="flex items-center justify-between gap-2">

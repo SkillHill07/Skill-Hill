@@ -2,10 +2,26 @@
 
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
-import { ArrowLeft, Clock3, Code2, HardDrive, ListChecks, TriangleAlert } from "lucide-react"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import {
+  ArrowLeft,
+  Clock3,
+  Code2,
+  HardDrive,
+  ListChecks,
+  Play,
+  RotateCcw,
+  Send,
+  TriangleAlert,
+  ChevronRight,
+  FileText,
+} from "lucide-react"
 import { api } from "@/lib/api"
 import { Badge, Button, Card, CardContent, ErrorBanner, Skeleton } from "./ui"
+import { CodeEditor } from "./workspace/code-editor"
+import { ResultsPanel, type WorkspaceSubmission } from "./workspace/results-panel"
 import { inr } from "@/lib/format"
+import { ProblemDescription } from "./problem-description"
 
 interface PublicTestCase {
   input: string
@@ -37,39 +53,160 @@ interface PracticeProblemDetail {
   } | null
 }
 
+interface Language {
+  key: string
+  name: string
+  version: string
+}
+
 const difficultyTone: Record<string, "green" | "amber" | "red"> = {
   easy: "green",
   medium: "amber",
   hard: "red",
 }
 
-export function ProblemViewer({ problemId }: { problemId: string }) {
-  const { data: problem, isLoading, error } = useQuery({
-    queryKey: ["problem", problemId],
-    queryFn: () => api.get<PracticeProblemDetail>(`/problems/${problemId}`),
+const difficultyLabel: Record<string, string> = {
+  easy: "Easy",
+  medium: "Medium",
+  hard: "Hard",
+}
+
+const STARTERS: Record<string, string> = {
+  javascript: `function solve(input) {\n  // read from stdin via require('fs')\n  console.log(input);\n}\n`,
+  python: `def solve():\n    # read stdin lines\n    print("hello")\n\nsolve()\n`,
+  golang: `package main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("hello")\n}\n`,
+  cpp: `#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // fast IO\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n\n    return 0;\n}\n`,
+  java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("hello");\n    }\n}\n`,
+}
+
+type Tab = "description" | "submissions"
+
+export function ProblemViewer({ problemSlug }: { problemSlug: string }) {
+  const {
+    data: problem,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["problem", "slug", problemSlug],
+    queryFn: () => api.get<PracticeProblemDetail>(`/problems/slug/${problemSlug}`),
     retry: false,
   })
 
+  const { data: languages } = useQuery({
+    queryKey: ["languages"],
+    queryFn: () => api.get<Language[]>("/languages"),
+    retry: false,
+    staleTime: 5 * 60_000,
+  })
+
+  const [language, setLanguage] = useState("")
+  const [code, setCode] = useState("")
+  const [mcqChoice, setMcqChoice] = useState<number | null>(null)
+  const [busy, setBusy] = useState<"run" | "submit" | null>(null)
+  const [runError, setRunError] = useState<string | null>(null)
+  const [submission, setSubmission] = useState<WorkspaceSubmission | null>(null)
+  const [liveStatus, setLiveStatus] = useState<string | null>(null)
+  const [history, setHistory] = useState<Array<{ id: string; mode: string; status: string; score: number; at: Date }>>([])
+  const [activeTab, setActiveTab] = useState<Tab>("description")
+  const [resultTab, setResultTab] = useState<"testcase" | "result">("testcase")
+
+  const problemLanguages = useMemo(() => {
+    if (!problem || problem.type === "mcq") return []
+    const supported = new Set(problem.languageSupport ?? [])
+    return (languages ?? []).filter((l) => supported.has(l.key) || supported.size === 0)
+  }, [problem, languages])
+
+  useEffect(() => {
+    if (problemLanguages.length > 0 && !language) {
+      setLanguage(problemLanguages[0].key)
+    }
+  }, [problemLanguages, language])
+
+  useEffect(() => {
+    if (!problem || problem.type !== "coding" || !language) return
+    const template = problem.solutionTemplate?.[language] ?? STARTERS[language] ?? STARTERS.javascript
+    if (!code) setCode(template)
+  }, [problem, language])
+
+  function resetCode() {
+    if (!problem || !language) return
+    setCode(problem.solutionTemplate?.[language] ?? STARTERS[language] ?? STARTERS.javascript)
+  }
+
+  async function send(mode: "run" | "submit") {
+    if (!problem) return
+    setBusy(mode)
+    setRunError(null)
+    setSubmission(null)
+    setLiveStatus("queued")
+    try {
+      const payload =
+        problem.type === "mcq"
+          ? { problemId: problem._id, code: mcqChoice?.toString() ?? "", mode }
+          : { problemId: problem._id, language, code, mode }
+      const result = await api.post<{ _id: string; status: string; totalScore: number }>(
+        `/contests/${problem.contestId?._id}/submissions`,
+        payload,
+      )
+      const newEntry = {
+        id: result._id,
+        mode,
+        status: "pending",
+        score: result.totalScore,
+        at: new Date(),
+      }
+      setHistory((prev) => [newEntry, ...prev].slice(0, 10))
+      setLiveStatus("running")
+      setResultTab("result")
+      let attempts = 0
+      const poll = setInterval(async () => {
+        attempts++
+        try {
+          const sub = await api.get<WorkspaceSubmission>(`/contests/${problem.contestId?._id}/submissions/${result._id}`)
+          if (sub && ["accepted", "rejected", "error", "timeout"].includes(sub.status)) {
+            clearInterval(poll)
+            setSubmission(sub)
+            setLiveStatus(null)
+            setHistory((prev) =>
+              prev.map((h) => (h.id === result._id ? { ...h, status: sub.status, score: sub.totalScore } : h)),
+            )
+          }
+        } catch {
+          // ignore poll errors
+        }
+        if (attempts > 30) clearInterval(poll)
+      }, 1000)
+    } catch (err) {
+      setRunError((err as Error).message)
+      setLiveStatus(null)
+    } finally {
+      setBusy(null)
+    }
+  }
+
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-10">
-        <Skeleton className="h-8 w-2/3" />
-        <Skeleton className="mt-4 h-40" />
+      <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
+        <div className="text-center">
+          <Skeleton className="mx-auto h-6 w-48" />
+          <Skeleton className="mx-auto mt-3 h-4 w-32" />
+        </div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-10">
-        <Link
-          href="/problems"
-          className="inline-flex items-center gap-1 text-sm font-medium text-orange-600 hover:underline dark:text-orange-400"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to library
-        </Link>
-        <div className="mt-6">
-          <ErrorBanner message="This problem isn't available for practice right now." />
+      <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
+        <div className="text-center">
+          <TriangleAlert className="mx-auto h-8 w-8 text-amber-500" />
+          <p className="mt-2 text-sm text-muted-foreground">This problem isn&apos;t available for practice right now.</p>
+          <Link
+            href="/problems"
+            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-orange-600 hover:underline dark:text-orange-400"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to library
+          </Link>
         </div>
       </div>
     )
@@ -77,170 +214,291 @@ export function ProblemViewer({ problemId }: { problemId: string }) {
 
   if (!problem) return null
 
-  // API may omit these fields entirely (e.g. MCQs) — never assume presence.
-  const templates = Object.entries(problem.solutionTemplate ?? {}).filter(([, code]) => code)
-  const languageSupport = problem.languageSupport ?? []
-  const firstTemplateLang = languageSupport[0] ?? templates[0]?.[0]
-  const firstTemplate = firstTemplateLang ? templates.find(([lang]) => lang === firstTemplateLang) ?? templates[0] : templates[0]
-
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
-      <Link
-        href="/problems"
-        className="inline-flex items-center gap-1 text-sm font-medium text-orange-600 hover:underline dark:text-orange-400"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back to library
-      </Link>
-
-      {/* Header */}
-      <div className="mt-6">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge tone={difficultyTone[problem.difficulty] ?? "neutral"}>{problem.difficulty}</Badge>
-          <Badge tone="teal">{problem.type === "mcq" ? "MCQ" : "Coding"}</Badge>
-          <Badge tone="slate">{problem.points} pts</Badge>
+    <div className="flex h-[calc(100vh-3.5rem)] flex-col">
+      {/* Top bar */}
+      <div className="flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-sm px-4 py-2">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/problems"
+            className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Library
+          </Link>
+          <span className="text-muted-foreground/30">/</span>
+          <h1 className="text-sm font-semibold truncate max-w-xs">{problem.title}</h1>
+          <div className="flex items-center gap-1.5">
+            <Badge tone={difficultyTone[problem.difficulty] ?? "neutral"} className="text-[10px] px-1.5 py-0">
+              {difficultyLabel[problem.difficulty] ?? problem.difficulty}
+            </Badge>
+            <Badge tone="teal" className="text-[10px] px-1.5 py-0">
+              {problem.type === "mcq" ? "MCQ" : "Coding"}
+            </Badge>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Badge tone="slate" className="text-[10px] px-1.5 py-0">{problem.points} pts</Badge>
           {problem.type === "coding" && (
             <>
-              <Badge tone="blue">
+              <span className="flex items-center gap-1">
                 <Clock3 className="h-3 w-3" /> {problem.timeLimit / 1000}s
-              </Badge>
-              <Badge tone="blue">
-                <HardDrive className="h-3 w-3" /> {problem.memoryLimit} MB
-              </Badge>
+              </span>
+              <span className="flex items-center gap-1">
+                <HardDrive className="h-3 w-3" /> {problem.memoryLimit}MB
+              </span>
             </>
           )}
         </div>
-        <h1 className="mt-3 text-3xl font-extrabold tracking-tight">{problem.title}</h1>
-        {problem.contestId && (
-          <p className="mt-1 text-sm text-muted-foreground">
-            From contest{" "}
-            <Link
-              href={`/contests/${problem.contestId._id}`}
-              className="font-medium text-orange-600 hover:underline dark:text-orange-400"
-            >
-              {problem.contestId.title}
-            </Link>
-            {problem.contestId.type === "paid" && ` · ${inr(problem.contestId.entryFee)} entry`}
-          </p>
-        )}
       </div>
 
-      {/* Statement */}
-      <Card className="mt-6">
-        <CardContent className="p-6">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Statement
-          </h2>
-          <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">{problem.description}</p>
-        </CardContent>
-      </Card>
-
-      {/* Public examples */}
-      {problem.type === "coding" && problem.testCases.length > 0 && (
-        <Card className="mt-4">
-          <CardContent className="p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Examples
-            </h2>
-            <div className="mt-3 flex flex-col gap-3">
-              {problem.testCases.map((tc, i) => (
-                <div key={i} className="overflow-hidden rounded-lg border border-border">
-                  <div className="border-b border-border bg-muted px-4 py-1.5 text-xs font-medium text-muted-foreground">
-                    Example {i + 1}
-                    {tc.description ? ` — ${tc.description}` : ""}
-                  </div>
-                  <div className="grid gap-3 p-4 sm:grid-cols-2">
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground">Input</p>
-                      <pre className="mt-1 overflow-x-auto rounded-md bg-slate-950 px-3 py-2 text-xs text-slate-100">
-                        {tc.input}
-                      </pre>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground">Output</p>
-                      <pre className="mt-1 overflow-x-auto rounded-md bg-slate-950 px-3 py-2 text-xs text-slate-100">
-                        {tc.expectedOutput}
-                      </pre>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* MCQ options */}
-      {problem.type === "mcq" && problem.options.length > 0 && (
-        <Card className="mt-4">
-          <CardContent className="p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Options
-            </h2>
-            <ol className="mt-3 flex flex-col gap-2">
-              {problem.options.map((opt, i) => (
-                <li
-                  key={i}
-                  className="flex items-start gap-3 rounded-lg border border-border px-4 py-3 text-sm"
-                >
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold">
-                    {String.fromCharCode(65 + i)}
-                  </span>
-                  {opt}
-                </li>
-              ))}
-            </ol>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Starter template */}
-      {problem.type === "coding" && firstTemplate && (
-        <Card className="mt-4">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <h2 className="flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                <Code2 className="h-4 w-4" /> Starter template
-              </h2>
-              {templates.length > 1 && (
-                <p className="text-xs text-muted-foreground">
-                  Available in: {languageSupport.join(", ")}
-                </p>
-              )}
-            </div>
-            <pre className="mt-3 overflow-x-auto rounded-lg bg-slate-950 px-4 py-3 text-sm text-slate-100">
-              <code>{firstTemplate[1]}</code>
-            </pre>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Practice note */}
-      <Card className="mt-4">
-        <CardContent className="flex items-start gap-3 p-6">
-          <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-          <p className="text-sm text-muted-foreground">
-            This is a practice view. In a live contest you would submit solutions
-            here, get judged against hidden test cases, and earn points on the
-            leaderboard.
-          </p>
-          <Button size="sm" className="ml-auto shrink-0" onClick={() => (window.location.href = "/contests")}>
-            Find a contest
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Language chips */}
-      {languageSupport.length > 0 && (
-        <div className="mt-4 flex flex-wrap items-center gap-1.5">
-          <ListChecks className="h-4 w-4 text-muted-foreground" aria-hidden />
-          {languageSupport.map((lang) => (
-            <span
-              key={lang}
-              className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+      {/* Main content - split view */}
+      <div className="flex flex-1 min-h-0">
+        {/* Left panel - Description */}
+        <div className="flex flex-col w-1/2 min-w-0 border-r border-border">
+          {/* Tabs */}
+          <div className="flex items-center border-b border-border bg-muted/30">
+            <button
+              onClick={() => setActiveTab("description")}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer ${
+                activeTab === "description"
+                  ? "border-orange-500 text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
             >
-              {lang}
-            </span>
-          ))}
+              <FileText className="h-3.5 w-3.5" />
+              Description
+            </button>
+            {problem.contestId && (
+              <Link
+                href={`/contests/${problem.contestId._id}`}
+                className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium border-b-2 border-transparent text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Contest
+                <ChevronRight className="h-3 w-3" />
+              </Link>
+            )}
+          </div>
+
+          {/* Description content */}
+          <div className="flex-1 overflow-y-auto p-6">
+            <ProblemDescription content={problem.description} />
+
+            {/* Public test cases */}
+            {problem.type === "coding" && problem.testCases.length > 0 && (
+              <div className="mt-6 space-y-4">
+                {problem.testCases.map((tc, i) => (
+                  <div key={i}>
+                    <h3 className="mb-2 text-sm font-bold">
+                      Example {i + 1}
+                      {tc.description ? (
+                        <span className="ml-2 font-normal text-muted-foreground">
+                          {tc.description}
+                        </span>
+                      ) : null}
+                    </h3>
+                    <div className="rounded-lg bg-slate-950 dark:bg-black/40 border border-border p-4 font-mono text-xs">
+                      <div className="mb-2">
+                        <span className="font-bold text-slate-300">Input:</span>{" "}
+                        <span className="text-slate-100">{tc.input}</span>
+                      </div>
+                      <div>
+                        <span className="font-bold text-slate-300">Output:</span>{" "}
+                        <span className="text-slate-100">{tc.expectedOutput}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* MCQ options */}
+            {problem.type === "mcq" && problem.options.length > 0 && (
+              <div className="mt-6">
+                <h3 className="mb-3 text-sm font-bold">Choose one answer</h3>
+                <div className="space-y-2">
+                  {problem.options.map((opt, i) => (
+                    <label
+                      key={i}
+                      className={`flex cursor-pointer items-start gap-3 rounded-lg border px-4 py-3 text-left text-sm transition-colors ${
+                        mcqChoice === i
+                          ? "border-orange-500 bg-orange-600/10 font-medium"
+                          : "border-border hover:bg-accent"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name={`mcq-${problem._id}`}
+                        checked={mcqChoice === i}
+                        onChange={() => setMcqChoice(i)}
+                        className="sr-only"
+                      />
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border text-xs font-semibold">
+                        {String.fromCharCode(65 + i)}
+                      </span>
+                      <span className="font-mono text-xs">{opt}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right panel - Code Editor */}
+        <div className="flex flex-col w-1/2 min-w-0">
+          {problem.type === "coding" ? (
+            <>
+              {/* Editor toolbar */}
+              <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-2">
+                <div className="flex items-center gap-2">
+                  <Code2 className="h-3.5 w-3.5 text-muted-foreground" />
+                  <select
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                    className="h-7 rounded-md border border-input bg-background px-2 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 cursor-pointer"
+                  >
+                    {problemLanguages.map((l) => (
+                      <option key={l.key} value={l.key}>
+                        {l.name}
+                      </option>
+                    ))}
+                    {problemLanguages.length === 0 && (
+                      <option value="javascript">JavaScript</option>
+                    )}
+                  </select>
+                  <button
+                    onClick={resetCode}
+                    disabled={!code}
+                    className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Reset
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    loading={busy === "run"}
+                    disabled={!code.trim() || busy !== null}
+                    onClick={() => send("run")}
+                    className="h-7 text-xs"
+                  >
+                    <Play className="h-3 w-3" /> Run
+                  </Button>
+                  <Button
+                    size="sm"
+                    loading={busy === "submit"}
+                    disabled={!code.trim() || busy !== null}
+                    onClick={() => send("submit")}
+                    className="h-7 text-xs"
+                  >
+                    <Send className="h-3 w-3" /> Submit
+                  </Button>
+                </div>
+              </div>
+
+              {/* Code editor */}
+              <div className="flex-1 min-h-0">
+                <CodeEditor value={code} onChange={setCode} language={language} />
+              </div>
+
+              {/* Results area */}
+              <div className="border-t border-border">
+                {/* Result tabs */}
+                <div className="flex items-center border-b border-border bg-muted/30">
+                  <button
+                    onClick={() => setResultTab("testcase")}
+                    className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors cursor-pointer ${
+                      resultTab === "testcase"
+                        ? "border-orange-500 text-foreground"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <ListChecks className="h-3 w-3" />
+                    Testcase
+                  </button>
+                  <button
+                    onClick={() => setResultTab("result")}
+                    className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors cursor-pointer ${
+                      resultTab === "result"
+                        ? "border-orange-500 text-foreground"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Code2 className="h-3 w-3" />
+                    Test Result
+                  </button>
+                </div>
+
+                <div className="max-h-60 overflow-y-auto">
+                  {resultTab === "result" ? (
+                    <ResultsPanel submission={submission} liveStatus={liveStatus} history={history} />
+                  ) : (
+                    <div className="p-4">
+                      {problem.testCases.length > 0 ? (
+                        <div className="space-y-3">
+                          {problem.testCases.map((tc, i) => (
+                            <div key={i} className="rounded-md border border-border p-3">
+                              <div className="text-xs font-medium text-muted-foreground mb-1">
+                                Case {i + 1}
+                              </div>
+                              <div className="font-mono text-xs space-y-1">
+                                <div>
+                                  <span className="text-muted-foreground">Input: </span>
+                                  <span className="text-foreground">{tc.input}</span>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">Expected: </span>
+                                  <span className="text-foreground">{tc.expectedOutput}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="p-4 text-xs text-muted-foreground text-center">
+                          No test cases available
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            /* MCQ submit */
+            <div className="flex flex-col items-center justify-center flex-1 p-6">
+              <Button
+                className="w-full max-w-sm"
+                loading={busy === "submit"}
+                disabled={mcqChoice === null || busy !== null}
+                onClick={() => send("submit")}
+              >
+                <Send className="h-4 w-4" /> Submit answer
+              </Button>
+              <div className="mt-4 w-full">
+                <ResultsPanel submission={submission} liveStatus={liveStatus} history={history} />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* CTA bar for contest */}
+      {problem.contestId && (
+        <div className="flex items-center justify-between border-t border-border bg-muted/30 px-4 py-2">
+          <p className="text-xs text-muted-foreground">
+            Want to compete for real prizes? Join the full contest for leaderboard rankings.
+          </p>
+          <Button
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => (window.location.href = `/contests/${problem.contestId?._id}`)}
+          >
+            Join contest
+          </Button>
         </div>
       )}
     </div>

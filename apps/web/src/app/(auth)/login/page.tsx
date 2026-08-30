@@ -6,7 +6,8 @@ import { Suspense, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Github, LogIn } from "lucide-react"
 import { api, getTurnstileToken } from "@/lib/api"
-import { Button, Card, CardContent, ErrorBanner, Input, Label, anchorButtonClasses } from "@/components/ui"
+import { Button, Card, CardContent, ErrorBanner, anchorButtonClasses } from "@/components/ui"
+import { FloatingInput } from "@/components/ui/floating-input"
 import { Turnstile } from "@/components/turnstile"
 
 interface OAuthUrl {
@@ -93,31 +94,27 @@ function LoginInner() {
           </div>
 
           <form onSubmit={submit} className="flex flex-col gap-3" noValidate={false}>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                required
-                minLength={8}
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+            <FloatingInput
+              id="email"
+              name="email"
+              type="email"
+              label="Email"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <FloatingInput
+              id="password"
+              name="password"
+              type="password"
+              label="Password"
+              required
+              minLength={8}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
             <div className="flex justify-end">
               <Link
                 href="/forgot-password"

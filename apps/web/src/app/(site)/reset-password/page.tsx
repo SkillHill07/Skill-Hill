@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useState } from "react"
 import { ShieldCheck } from "lucide-react"
 import { api } from "@/lib/api"
-import { Button, Card, CardContent, ErrorBanner, Input, Label } from "@/components/ui"
+import { Button, Card, CardContent, ErrorBanner } from "@/components/ui"
+import { FloatingInput } from "@/components/ui/floating-input"
 
 function ResetPasswordInner() {
   const router = useRouter()
@@ -62,10 +63,10 @@ function ResetPasswordInner() {
           )}
           <form onSubmit={submit} className="flex flex-col gap-3">
             <div>
-              <Label htmlFor="password">New password</Label>
-              <Input
+              <FloatingInput
                 id="password"
                 type="password"
+                label="New password"
                 required
                 minLength={8}
                 value={password}

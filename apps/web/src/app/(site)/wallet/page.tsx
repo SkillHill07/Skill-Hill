@@ -12,11 +12,10 @@ import {
   CardContent,
   EmptyState,
   ErrorBanner,
-  Input,
-  Label,
   Skeleton,
   StatCard,
 } from "@/components/ui"
+import { FloatingInput } from "@/components/ui/floating-input"
 import { Turnstile } from "@/components/turnstile"
 import { RequireAuth } from "@/components/require-auth"
 
@@ -212,20 +211,17 @@ function WalletInner() {
               Deposit funds via UPI/cards (Razorpay). Min ₹10, max ₹5,000 per order.
             </p>
             <div className="flex flex-col gap-3">
-              <div>
-                <Label htmlFor="deposit">Amount (₹)</Label>
-                <Input
-                  id="deposit"
-                  type="number"
-                  inputMode="decimal"
-                  min={10}
-                  max={5000}
-                  step="0.01"
-                  placeholder="e.g. 200"
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(e.target.value)}
-                />
-              </div>
+              <FloatingInput
+                id="deposit"
+                type="number"
+                inputMode="decimal"
+                label="Amount (₹)"
+                min={10}
+                max={5000}
+                step="0.01"
+                value={depositAmount}
+                onChange={(e) => setDepositAmount(e.target.value)}
+              />
               <Button
                 onClick={deposit}
                 loading={busy === "deposit"}
@@ -245,30 +241,23 @@ function WalletInner() {
               Payout to your verified UPI id (min ₹100). KYC must be verified.
             </p>
             <div className="flex flex-col gap-3">
-              <div>
-                <Label htmlFor="withdraw">Amount (₹)</Label>
-                <Input
-                  id="withdraw"
-                  type="number"
-                  inputMode="decimal"
-                  min={100}
-                  step="0.01"
-                  placeholder="e.g. 250"
-                  value={withdrawAmount}
-                  onChange={(e) => setWithdrawAmount(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="upi">UPI id (optional)</Label>
-                <Input
-                  id="upi"
-                  type="text"
-                  autoComplete="off"
-                  placeholder="name@upi"
-                  value={upiId}
-                  onChange={(e) => setUpiId(e.target.value)}
-                />
-              </div>
+              <FloatingInput
+                id="withdraw"
+                type="number"
+                inputMode="decimal"
+                label="Amount (₹)"
+                min={100}
+                step="0.01"
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(e.target.value)}
+              />
+              <FloatingInput
+                id="upi"
+                label="UPI id (optional)"
+                autoComplete="off"
+                value={upiId}
+                onChange={(e) => setUpiId(e.target.value)}
+              />
 
               <Turnstile onToken={setTurnstileToken} />
 

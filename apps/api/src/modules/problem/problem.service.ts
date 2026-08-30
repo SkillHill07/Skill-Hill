@@ -163,6 +163,29 @@ async function getPracticeProblem(problemId: string): Promise<IProblem> {
   return problem
 }
 
+/**
+ * Lookup a practice problem by its slug. Returns the first matching public
+ * problem from an active/frozen/settled contest.
+ */
+async function getPracticeProblemBySlug(slug: string): Promise<IProblem> {
+  const practiceContests = await Contest.find({
+    status: { $in: PRACTICE_CONTEST_STATUSES },
+  }).select("_id")
+
+  const problem = await Problem.findOne({
+    slug,
+    contestId: { $in: practiceContests.map((c) => c._id) },
+  }).populate("contestId", "title slug status type entryFee")
+
+  if (!problem) {
+    throw Object.assign(new Error("Problem not found"), {
+      status: 404,
+      code: "PROBLEM_NOT_FOUND",
+    })
+  }
+  return problem
+}
+
 async function createProblem(
   contestId: string,
   input: CreateProblemBody,
@@ -388,6 +411,7 @@ export const problemService = {
   getProblem,
   listPracticeProblems,
   getPracticeProblem,
+  getPracticeProblemBySlug,
   createProblem,
   updateProblem,
   deleteProblem,

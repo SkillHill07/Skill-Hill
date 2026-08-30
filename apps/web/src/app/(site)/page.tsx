@@ -27,8 +27,10 @@ import {
   Reveal,
   SectionHeading,
 } from "@/components/marketing"
-import { Badge, Card, CardContent, EmptyState, Skeleton } from "@/components/ui"
 import { Faq6 } from "@/components/watermelon-ui/faq-6"
+import Features3 from "@/components/watermelon-ui/feature-3"
+import Testimonials4 from "@/components/watermelon-ui/testimonials-4"
+import { Badge, Card, CardContent, EmptyState, Skeleton } from "@/components/ui"
 import { cn } from "@skillcontest/ui"
 import { inr } from "@/lib/format"
 
@@ -286,7 +288,7 @@ export default function HomePage() {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="mt-4 grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3"
           >
-            <Card className="relative overflow-hidden p-5">
+            <Card className="relative overflow-hidden p-5 border-border/60 bg-card/80 backdrop-blur-sm">
               <div className="absolute -right-3 -top-3 flex h-10 w-10 items-center justify-center rounded-full bg-orange-600/10 text-orange-600 dark:text-orange-400">
                 <Trophy className="h-5 w-5" aria-hidden />
               </div>
@@ -297,7 +299,7 @@ export default function HomePage() {
                 <Countup value={contests.total} />
               </p>
             </Card>
-            <Card className="relative overflow-hidden p-5">
+            <Card className="relative overflow-hidden p-5 border-border/60 bg-card/80 backdrop-blur-sm">
               <div className="absolute -right-3 -top-3 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600/10 text-emerald-600 dark:text-emerald-400">
                 <Wallet className="h-5 w-5" aria-hidden />
               </div>
@@ -308,7 +310,7 @@ export default function HomePage() {
                 <Countup value={prizePool} format={(n) => inr(Math.round(n))} />
               </p>
             </Card>
-            <Card className="relative overflow-hidden p-5">
+            <Card className="relative overflow-hidden p-5 border-border/60 bg-card/80 backdrop-blur-sm">
               <div className="absolute -right-3 -top-3 flex h-10 w-10 items-center justify-center rounded-full bg-blue-600/10 text-blue-600 dark:text-blue-400">
                 <Code2 className="h-5 w-5" aria-hidden />
               </div>
@@ -440,6 +442,11 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ======================== Features ========================== */}
+      <Reveal>
+        <Features3 />
+      </Reveal>
+
       {/* ========================== Stats ========================== */}
       <section className="relative overflow-hidden border-y border-border bg-gradient-to-b from-muted/40 to-background py-14">
         <div className="mx-auto max-w-6xl px-4">
@@ -455,7 +462,7 @@ export default function HomePage() {
               { label: "Contests hosted", value: 180, icon: <Trophy className="h-5 w-5" /> },
             ].map((stat, i) => (
               <Reveal key={stat.label} delay={i * 0.1}>
-                <Card className="relative overflow-hidden p-5 text-center">
+                <Card className="relative overflow-hidden p-5 text-center border-border/60 bg-card/80 backdrop-blur-sm">
                   <div className="mb-3 flex justify-center text-orange-500">
                     {stat.icon}
                   </div>
@@ -563,7 +570,7 @@ export default function HomePage() {
                         Start practicing <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                       </span>
                     </CardContent>
-                    {/* Subtle code decoration */}
+                    {/* Code decoration per difficulty */}
                     <div className="pointer-events-none absolute bottom-2 right-3 font-mono text-[10px] leading-tight text-muted-foreground/30">
                       {d.label === "Easy" && "for (let i = 0;)"}
                       {d.label === "Medium" && "dp[i] = Math.max()"}
@@ -576,6 +583,11 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ======================== Testimonials ====================== */}
+      <Reveal>
+        <Testimonials4 />
+      </Reveal>
 
       {/* ============================== FAQs ============================== */}
       {faqs && faqs.length > 0 && (

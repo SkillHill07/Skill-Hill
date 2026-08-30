@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { useEffect, useRef, useState } from "react"
-import { CheckCircle2, History, Settings, ShieldCheck, User, XCircle } from "lucide-react"
+import { CheckCircle2, History, Settings, ShieldCheck, User, XCircle, Pencil } from "lucide-react"
 import { api } from "@/lib/api"
 import { formatDate, inr } from "@/lib/format"
 import {
@@ -12,11 +12,11 @@ import {
   CardContent,
   EmptyState,
   ErrorBanner,
-  Input,
-  Label,
   Skeleton,
 } from "@/components/ui"
+import { FloatingInput } from "@/components/ui/floating-input"
 import { RequireAuth } from "@/components/require-auth"
+import ProfileSetup from "@/components/kokonutui/avatar-picker"
 import { cn } from "@skillcontest/ui"
 
 interface Me {
@@ -84,6 +84,7 @@ function ProfileTab({
   busy,
   saveProfile,
   uploadAvatar,
+  onSelectAvatar,
 }: {
   me: Me
   firstName: string
@@ -93,64 +94,97 @@ function ProfileTab({
   busy: "profile" | "avatar" | "kyc" | null
   saveProfile: () => void
   uploadAvatar: (f: File) => void
+  onSelectAvatar: (id: number) => void
 }) {
   const fileRef = useRef<HTMLInputElement>(null)
+  const [showPicker, setShowPicker] = useState(false)
 
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-4 p-5">
-        <div className="flex items-center gap-4">
-          <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-orange-600 text-2xl font-bold text-white">
-            {me.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={me.avatarUrl} alt={`${me.firstName}'s avatar`} className="h-full w-full object-cover" />
-            ) : (
-              me.firstName?.[0] ?? "?"
-            )}
-          </span>
-          <div className="flex flex-col gap-1">
-            <p className="text-lg font-semibold">
-              {me.firstName} {me.lastName}
-            </p>
-            <p className="text-sm text-muted-foreground">{me.email}</p>
-            <Badge tone={me.role === "admin" || me.role === "creator" ? "teal" : "neutral"}>
-              {me.role}
-            </Badge>
-          </div>
-        </div>
+    <div className="flex flex-col gap-4">
+      {/* Avatar picker */}
+      {showPicker && (
+        <ProfileSetup
+          onComplete={(data) => {
+            onSelectAvatar(data.avatarId)
+            setShowPicker(false)
+          }}
+          className="w-full"
+        />
+      )}
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <Label htmlFor="fn">First name</Label>
-            <Input id="fn" name="firstName" autoComplete="given-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+      <Card>
+        <CardContent className="flex flex-col gap-4 p-5">
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setShowPicker(!showPicker)}
+              className="group relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-orange-600 text-2xl font-bold text-white cursor-pointer"
+            >
+              {me.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={me.avatarUrl} alt={`${me.firstName}'s avatar`} className="h-full w-full object-cover" />
+              ) : (
+                me.firstName?.[0] ?? "?"
+              )}
+              <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                <Pencil className="h-5 w-5 text-white" />
+              </span>
+            </button>
+            <div className="flex flex-col gap-1">
+              <p className="text-lg font-semibold">
+                {me.firstName} {me.lastName}
+              </p>
+              <p className="text-sm text-muted-foreground">{me.email}</p>
+              <Badge tone={me.role === "admin" || me.role === "creator" ? "teal" : "neutral"}>
+                {me.role}
+              </Badge>
+            </div>
           </div>
-          <div>
-            <Label htmlFor="ln">Last name</Label>
-            <Input id="ln" name="lastName" autoComplete="family-name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-          </div>
-        </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={saveProfile} loading={busy === "profile"}>
-            Save changes
-          </Button>
-          <Button variant="outline" onClick={() => fileRef.current?.click()} loading={busy === "avatar"}>
-            Upload avatar
-          </Button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            aria-label="Upload avatar image"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (f) void uploadAvatar(f)
-            }}
-          />
-        </div>
-      </CardContent>
-    </Card>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FloatingInput
+              id="fn"
+              name="firstName"
+              label="First name"
+              autoComplete="given-name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+            />
+            <FloatingInput
+              id="ln"
+              name="lastName"
+              label="Last name"
+              autoComplete="family-name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={saveProfile} loading={busy === "profile"}>
+              Save changes
+            </Button>
+            <Button variant="outline" onClick={() => fileRef.current?.click()} loading={busy === "avatar"}>
+              Upload photo
+            </Button>
+            <Button variant="ghost" onClick={() => setShowPicker(!showPicker)}>
+              Choose avatar
+            </Button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              aria-label="Upload avatar image"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) void uploadAvatar(f)
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   )
 }
 
@@ -290,8 +324,15 @@ function SettingsTab({
         <CardContent className="flex flex-col gap-4 p-5">
           <h3 className="font-semibold">Phone number</h3>
           <div className="max-w-sm">
-            <Label htmlFor="ph">Phone</Label>
-            <Input id="ph" name="phone" type="tel" inputMode="numeric" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="10-digit mobile number" />
+            <FloatingInput
+              id="ph"
+              name="phone"
+              type="tel"
+              inputMode="numeric"
+              label="Phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
           </div>
           <div>
             <Button onClick={saveProfile} loading={busy === "profile"}>
@@ -324,22 +365,37 @@ function SettingsTab({
           )}
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <Label htmlFor="pan">PAN number</Label>
-              <Input id="pan" value={pan} onChange={(e) => setPan(e.target.value)} placeholder="ABCDE1234F" maxLength={10} autoComplete="off" />
-            </div>
-            <div>
-              <Label htmlFor="upi">UPI id</Label>
-              <Input id="upi" type="text" value={upi} onChange={(e) => setUpi(e.target.value)} placeholder="name@upi" autoComplete="off" />
-            </div>
-            <div>
-              <Label htmlFor="bank">Bank account number</Label>
-              <Input id="bank" value={bankAccount} onChange={(e) => setBankAccount(e.target.value)} placeholder="9–18 digits" inputMode="numeric" autoComplete="off" />
-            </div>
-            <div>
-              <Label htmlFor="ifsc">IFSC code</Label>
-              <Input id="ifsc" value={ifsc} onChange={(e) => setIfsc(e.target.value)} placeholder="HDFC0001234" maxLength={11} autoComplete="off" />
-            </div>
+            <FloatingInput
+              id="pan"
+              label="PAN number"
+              value={pan}
+              onChange={(e) => setPan(e.target.value)}
+              maxLength={10}
+              autoComplete="off"
+            />
+            <FloatingInput
+              id="upi"
+              label="UPI id"
+              value={upi}
+              onChange={(e) => setUpi(e.target.value)}
+              autoComplete="off"
+            />
+            <FloatingInput
+              id="bank"
+              label="Bank account number"
+              value={bankAccount}
+              onChange={(e) => setBankAccount(e.target.value)}
+              inputMode="numeric"
+              autoComplete="off"
+            />
+            <FloatingInput
+              id="ifsc"
+              label="IFSC code"
+              value={ifsc}
+              onChange={(e) => setIfsc(e.target.value)}
+              maxLength={11}
+              autoComplete="off"
+            />
           </div>
 
           <Button variant="secondary" onClick={saveKyc} loading={busy === "kyc"}>
@@ -518,6 +574,10 @@ function ProfileInner() {
           busy={busy}
           saveProfile={saveProfile}
           uploadAvatar={uploadAvatar}
+          onSelectAvatar={(id) => {
+            // Store selected avatar ID; a real implementation would POST to API
+            setNotice(`Avatar ${id} selected — save changes to apply`)
+          }}
         />
       )}
 
