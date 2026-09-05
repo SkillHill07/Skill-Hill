@@ -25,19 +25,19 @@ export function SectionHeading({
   return (
     <div
       className={cn(
-        "flex flex-col gap-2",
+        "flex flex-col gap-3",
         align === "center" && "items-center text-center",
         className,
       )}
     >
       {eyebrow && (
-        <p className="text-xs font-semibold uppercase tracking-widest text-orange-600 dark:text-orange-400">
+        <p className="text-xs font-semibold uppercase tracking-widest text-orange-500">
           {eyebrow}
         </p>
       )}
-      <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h2>
+      <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{title}</h2>
       {description && (
-        <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">{description}</p>
+        <p className="max-w-2xl text-base text-muted-foreground">{description}</p>
       )}
     </div>
   )
@@ -61,9 +61,9 @@ export function Reveal({
   const Tag = motion[as] as typeof motion.div
   return (
     <Tag
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
+      viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.5, delay, ease: "easeOut" }}
       className={className}
     >
@@ -180,7 +180,7 @@ export function Avatar({
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-orange-600 font-bold text-white",
+        "inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-700 font-bold text-white",
         avatarSizes[size],
         className,
       )}

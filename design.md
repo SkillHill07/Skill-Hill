@@ -2,7 +2,7 @@
 
 This document describes the **actual** design system implemented in `apps/web` and `apps/admin`. When code and this document disagree, fix one of them in the same change — never let them drift.
 
-Stack context: Next.js App Router, Tailwind CSS v4 (CSS-first `@theme inline` tokens), hand-rolled primitives in each app's `src/components/ui.tsx`, shared `cn()` helper from `@skillcontest/ui`.
+Stack context: Next.js App Router, Tailwind CSS v4 (CSS-first `@theme inline` tokens), hand-rolled primitives in `apps/web/src/components/ui.tsx`, shared `cn()` helper from `@skillcontest/ui`.
 
 ---
 
@@ -15,6 +15,7 @@ SkillHill is a **competitive coding arena**, not a generic SaaS dashboard.
 - **Dense where experts work** (workspace, tables), **airy where visitors browse** (marketing pages).
 - Every visual choice must serve comprehension: hierarchy → scanning → action.
 - No decoration without information value. No glassmorphism, no gradient soup, no animation for its own sake.
+- Orange is used **strategically** — for CTAs, scores, progress, and brand moments. Not everywhere.
 
 ## 2. Brand personality
 
@@ -26,18 +27,18 @@ Tokens are HSL channel variables consumed through Tailwind (`bg-background`, `te
 
 ### Backgrounds & surfaces
 
-| Token | Light | Usage |
-|---|---|---|
-| `background` | white | Page background |
-| `card` | white | Cards, panels |
-| `muted` | zinc-100 | Section tints, inline code chips, hover fills |
-| `accent` | zinc-100 | Hover states on nav items / ghost buttons |
+| Token | Light | Dark | Usage |
+|---|---|---|---|
+| `background` | white | `240 10% 4%` | Page background |
+| `card` | white | `240 8% 7%` | Cards, panels, elevated surfaces |
+| `muted` | zinc-100 | `240 5% 12%` | Section tints, inline code chips, hover fills |
+| `accent` | zinc-100 | `240 5% 12%` | Hover states on nav items / ghost buttons |
 
 ### Foreground
 
 | Token | Usage |
 |---|---|
-| `foreground` | Primary text — zinc-950 light / zinc-50 dark |
+| `foreground` | Primary text — zinc-950 light / `0 0% 95%` dark |
 | `muted-foreground` | Secondary text, descriptions, timestamps |
 | `card-foreground` | Text on cards |
 
@@ -45,7 +46,7 @@ Tokens are HSL channel variables consumed through Tailwind (`bg-background`, `te
 
 | Token / utility | Meaning | Notes |
 |---|---|---|
-| `indigo-600` | **Brand primary** | Buttons, active nav, links, focus rings, brand icons |
+| `orange-600` | **Brand primary** | CTAs, active states, brand accents, scores |
 | `emerald-*` | Success / money-in / accepted | Prizes, credits, "Accepted" verdicts |
 | `amber-*` | Warning / pending / medium difficulty | Pending KYC, queued submissions |
 | `red-*` | Danger / money-out / rejected | Errors, debits, wrong answers |
@@ -56,6 +57,7 @@ Tokens are HSL channel variables consumed through Tailwind (`bg-background`, `te
 - Money amounts always use `tabular-nums`.
 - Green = incoming money only. Outgoing/debits use plain foreground or red.
 - Never introduce a new hue for a one-off component. Map it to an existing tone first.
+- Orange is NOT the default for every icon container. Use it only for brand moments and key actions.
 
 ## 4. Typography
 
@@ -70,10 +72,10 @@ Loaded via `next/font/google` with CSS variables `--font-sans` / `--font-mono`, 
 
 | Element | Class pattern |
 |---|---|
-| Page title (h1) | `text-2xl font-bold tracking-tight` (marketing hero: `text-4xl sm:text-6xl font-extrabold`) |
-| Section heading | `font-semibold` with `SectionHeading` eyebrow (`text-xs uppercase tracking-wide text-indigo-600`) |
+| Page title (h1) | `text-4xl sm:text-5xl font-extrabold tracking-tight` |
+| Section heading | `text-3xl font-bold tracking-tight sm:text-4xl` with `SectionHeading` eyebrow (`text-xs uppercase tracking-widest text-orange-500`) |
 | Card title | `text-base font-semibold leading-none tracking-tight` |
-| Body | `text-sm` (14px) default; long-form `leading-relaxed` |
+| Body | `text-sm` (14px) default; long-form `text-base leading-relaxed` |
 | Secondary/meta | `text-sm text-muted-foreground` |
 | Micro-labels | `text-xs font-medium uppercase tracking-wide text-muted-foreground` |
 | Stat values | `text-2xl font-bold tracking-tight tabular-nums` |
@@ -84,7 +86,7 @@ Body line-height ≥ 1.5; headings ≤ 1.3. Headings are real `h1–h3` elements
 
 - Base unit: 4px. Use Tailwind steps (1=4px, 2=8px, 3=12px, 4=16px, 5=20px, 6=24px).
 - Page container: `mx-auto max-w-6xl px-4` (marketing up to `max-w-7xl`; auth forms `max-w-md`).
-- Vertical rhythm on pages: `py-10`; between major sections `mt-6`–`mt-8` (app) or `py-14` (marketing).
+- Vertical rhythm on pages: `py-10`; between major sections `mt-6`–`mt-8` (app) or `py-16` (marketing).
 - Card padding: `p-5`. List rows inside cards: `px-5 py-3`.
 - Form field gaps: `gap-3`; label-to-input handled inside `Label` (`mb-1.5`).
 - Grids: `gap-4` everywhere. Responsive columns: 1 → `sm:grid-cols-2` → `lg:grid-cols-3/4`.
@@ -93,29 +95,29 @@ Body line-height ≥ 1.5; headings ≤ 1.3. Headings are real `h1–h3` elements
 
 | Property | Value | Where |
 |---|---|---|
-| Radius sm | `rounded-md` (6px) | Inline code chips |
-| Radius default | `rounded-lg` (8px) | Buttons, inputs, badges-ish rows, alerts |
+| Radius sm | `rounded-md` (6px) | Inline code chips, nav items |
+| Radius default | `rounded-lg` (8px) | Buttons, inputs, badges, rows, alerts |
 | Radius lg | `rounded-xl` (12px) | Cards, EmptyState, workspace panels |
 | Radius full | `rounded-full` | Badges, avatars |
-| Border | `border-border` (zinc-200 light / zinc-800 dark) on every card & input | Never pure black/white borders |
+| Border | `border-border` on every card & input | Never pure black/white borders |
 | Shadows | `shadow-sm` resting cards, `shadow-md` hover lift | Nothing larger; no colored glows |
 
 ## 7. Components
 
-All live in `apps/*/src/components/ui.tsx` unless noted. Use them; do not restyle raw HTML to look like them.
+All live in `apps/web/src/components/ui.tsx` unless noted. Use them; do not restyle raw HTML to look like them.
 
 ### Button
 
-Variants: `primary` (indigo-600, white text), `secondary` (slate-900/100 inverse), `outline` (bordered), `ghost`, `danger` (red-600), `success` (emerald-600). Sizes: `sm h-8`, `md h-10`, `lg h-11`.
+Variants: `primary` (orange-600, white text), `secondary` (zinc-900/100 inverse), `outline` (bordered), `ghost`, `danger` (red-600), `success` (emerald-600). Sizes: `sm h-8`, `md h-10`, `lg h-11`.
 
 - One primary button per view region; everything else outline/ghost.
 - `loading` prop swaps in a spinner and disables; keep labels verb-first ("Join contest", not "Submit").
-- Links that look like buttons use `<Link>` with `anchorButtonClasses` / local `ButtonLink` patterns — never `<button><a>`.
+- Links that look like buttons use `<Link>` with local `ButtonLink` patterns — never `<button><a>`.
 - Icons inside buttons: `h-4 w-4` (+ `aria-hidden`).
 
 ### Inputs / Textarea / Select
 
-Height `h-10`, `rounded-lg border border-input bg-background`, focus ring `ring-indigo-500`. Always paired with `Label htmlFor`. Helper text below input: `mt-1 text-xs text-muted-foreground` with `aria-describedby`. Native `<select>` is acceptable for language pickers (styled to match inputs).
+Height `h-10`, `rounded-lg border border-input bg-background`, focus ring `ring-orange-500`. Always paired with `Label htmlFor`. Helper text below input: `mt-1 text-xs text-muted-foreground` with `aria-describedby`. Native `<select>` is acceptable for language pickers (styled to match inputs).
 
 ### Card
 
@@ -127,7 +129,7 @@ Pill (`rounded-full px-2.5 py-0.5 text-xs font-medium`). Tones map to domains: s
 
 ### Tables / lists
 
-Row lists inside cards use `divide-y divide-border` with `px-5 py-3` rows — preferred over bordered tables for transactional data. Admin uses real `<table>` primitives from its ui.tsx.
+Row lists inside cards use `divide-y divide-border` with `px-5 py-3` rows — preferred over bordered tables for transactional data.
 
 ### Feedback
 
@@ -146,9 +148,8 @@ Row lists inside cards use `divide-y divide-border` with `px-5 py-3` rows — pr
 
 Library: `motion` (Framer Motion) — the only allowed animation dependency.
 
-- Marketing reveals: `Reveal` (fade + 16–24px rise, ~0.5s, whileInView once).
+- Marketing reveals: `Reveal` (fade + 20px rise, ~0.5s, whileInView once).
 - Hero: staggered entrance ≤ 0.6s total.
-- Marquee: winners wall only; pauses under `prefers-reduced-motion`.
 - Hover transitions: `transition-colors` (150ms) on interactive elements; `-translate-y-0.5 shadow-md` lifts on marketing cards only.
 - Workspace/editor: **no decorative motion**. Judge results update instantly.
 - `globals.css` kills animations/transitions globally under `prefers-reduced-motion: reduce`.
@@ -159,9 +160,9 @@ Library: `motion` (Framer Motion) — the only allowed animation dependency.
 - Icon-only controls require `aria-label` (e.g., mobile menu open/close states).
 - Decorative icons get `aria-hidden="true"`.
 - Forms: label + control via `htmlFor`/`id`; radio groups use `<fieldset><legend>`; errors reference inputs via `aria-describedby`.
-- Focus: visible rings everywhere (`focus-visible:ring-2 ring-offset-2`); keyboard-reachable custom controls (problem switcher, MCQ options as labels+sr-only radios).
+- Focus: visible rings everywhere (`focus-visible:ring-2 ring-offset-2`); keyboard-reachable custom controls.
 - Dialogs/menus: escape closes, focus returns to trigger (mobile menu toggles `aria-expanded`).
-- Contrast: body text ≥ 4.5:1; indigo-600 on white passes for large/medium text — don't lighten brand color for text usage.
+- Contrast: body text ≥ 4.5:1.
 - Live regions: judge status line and notices use `role="status"` / `aria-live="polite"` where they change asynchronously.
 
 ## 10. Responsive behavior
@@ -190,6 +191,7 @@ Breakpoints: Tailwind defaults (`sm 640`, `md 768`, `lg 1024`, `xl 1280`).
 - Keep one visual language across web and admin (same fonts, radii, badge shapes).
 - Show money as `inr(paise)` from `lib/format.ts` — never hand-format rupees.
 - Reserve red for destructive/error; reserve green for success/money-in.
+- Use orange strategically — CTAs, brand moments, scores. Not as default icon background.
 
 **Don't**
 
@@ -198,3 +200,6 @@ Breakpoints: Tailwind defaults (`sm 640`, `md 768`, `lg 1024`, `xl 1280`).
 - Don't put buttons inside links (or vice versa) — style the anchor instead.
 - Don't swallow query failures into empty states; show the error banner.
 - Don't build a one-off component when composing existing primitives works.
+- Don't make every icon container orange. Use muted/neutral backgrounds by default.
+- Don't use excessive card grids. Use editorial/alternating layouts for features.
+- Don't use floating gradient orbs, animated gradient text, or decorative blobs.

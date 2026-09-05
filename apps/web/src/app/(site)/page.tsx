@@ -3,32 +3,25 @@
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
 import { motion } from "motion/react"
+import { useState } from "react"
 import {
   ArrowRight,
   BadgeCheck,
-  BrainCircuit,
   Clock3,
-  Code2,
   Crown,
-  ChevronRight,
-  Rocket,
-  Sparkles,
+  FileCode2,
   Trophy,
   Users,
-  Wallet,
 } from "lucide-react"
 import { api } from "@/lib/api"
-import { ContestCard, type ContestCardData } from "@/components/contest-card"
+import { type ContestCardData } from "@/components/contest-card"
 import {
   Avatar,
   Countup,
-  Marquee,
   Reveal,
   SectionHeading,
 } from "@/components/marketing"
-import { Faq6 } from "@/components/watermelon-ui/faq-6"
-import Features3 from "@/components/watermelon-ui/feature-3"
-import { Badge, Card, CardContent, EmptyState, Skeleton } from "@/components/ui"
+import { Badge, Button } from "@/components/ui"
 import { cn } from "@skillcontest/ui"
 import { inr } from "@/lib/format"
 
@@ -42,15 +35,6 @@ interface WhyChooseUsItem {
   title: string
   description: string
   icon: string
-}
-
-interface Banner {
-  _id: string
-  title: string
-  subtitle: string | null
-  ctaText: string | null
-  ctaLink: string | null
-  imageUrl: string | null
 }
 
 interface Faq {
@@ -74,14 +58,6 @@ interface RecentWinner {
   contest: { title: string; slug: string } | null
 }
 
-const whyIcons: Record<string, React.ReactNode> = {
-  trophy: <Trophy className="h-5 w-5" aria-hidden />,
-  users: <Users className="h-5 w-5" aria-hidden />,
-  wallet: <Wallet className="h-5 w-5" aria-hidden />,
-  sparkles: <Sparkles className="h-5 w-5" aria-hidden />,
-}
-
-/** Anchor styled as a primary/outline button — avoids invalid <button><a> nesting. */
 function ButtonLink({
   href,
   children,
@@ -90,17 +66,16 @@ function ButtonLink({
 }: {
   href: string
   children: React.ReactNode
-  variant?: "primary" | "outline" | "ghost-white"
+  variant?: "primary" | "outline"
   className?: string
 }) {
   return (
     <Link
       href={href}
       className={cn(
-        "inline-flex h-11 items-center justify-center gap-2 rounded-lg px-6 text-base font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "inline-flex h-10 items-center justify-center gap-2 rounded-lg px-5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         variant === "primary" && "bg-orange-600 text-white shadow-sm hover:bg-orange-500",
         variant === "outline" && "border border-border bg-transparent hover:bg-accent",
-        variant === "ghost-white" && "text-white hover:bg-white/10",
         className,
       )}
     >
@@ -111,43 +86,34 @@ function ButtonLink({
 
 const steps = [
   {
-    icon: <BadgeCheck className="h-5 w-5" aria-hidden />,
-    title: "Create a free account",
-    text: "Sign up in seconds and access the practice library immediately.",
+    icon: <BadgeCheck className="h-4 w-4" aria-hidden />,
+    title: "Create your account",
+    text: "Sign up for free and access the practice library immediately.",
   },
   {
-    icon: <Wallet className="h-5 w-5" aria-hidden />,
-    title: "Join a contest",
-    text: "Pick a timed contest, pay the entry fee, and lock in your seat.",
+    icon: <FileCode2 className="h-4 w-4" aria-hidden />,
+    title: "Solve your first problem",
+    text: "Pick from hundreds of problems across easy, medium, and hard.",
   },
   {
-    icon: <Clock3 className="h-5 w-5" aria-hidden />,
-    title: "Solve under the clock",
-    text: "Race through coding problems while the timer runs. Every submission counts.",
+    icon: <Clock3 className="h-4 w-4" aria-hidden />,
+    title: "Enter a contest",
+    text: "Join a timed contest and race against other developers.",
   },
   {
-    icon: <Crown className="h-5 w-5" aria-hidden />,
-    title: "Win real prize money",
-    text: "Top the leaderboard when time runs out and prizes are distributed automatically.",
+    icon: <Crown className="h-4 w-4" aria-hidden />,
+    title: "Climb the leaderboard",
+    text: "Top performers win real prize money, paid automatically.",
   },
 ]
 
-const difficultyCards = [
-  {
-    tone: "text-emerald-600 dark:text-emerald-400 border-emerald-300/50 dark:border-emerald-500/30",
-    label: "Easy",
-    text: "Warm-up problems to build momentum and learn the arena format.",
-  },
-  {
-    tone: "text-amber-600 dark:text-amber-400 border-amber-300/50 dark:border-amber-500/30",
-    label: "Medium",
-    text: "Real interview-style questions that separate the pack.",
-  },
-  {
-    tone: "text-rose-600 dark:text-rose-400 border-rose-300/50 dark:border-rose-500/30",
-    label: "Hard",
-    text: "Brutal edge-case riddles. Winners are made here.",
-  },
+const languages = [
+  { key: "cpp", name: "C++", code: `#include <iostream>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> nums = {2, 7, 11, 15};\n    int target = 9;\n    \n    for (int i = 0; i < nums.size(); i++) {\n        for (int j = i + 1; j < nums.size(); j++) {\n            if (nums[i] + nums[j] == target) {\n                cout << i << " " << j << endl;\n                return 0;\n            }\n        }\n    }\n    return -1;\n}` },
+  { key: "python", name: "Python", code: `def two_sum(nums, target):\n    seen = {}\n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in seen:\n            return [seen[complement], i]\n        seen[num] = i\n    return []` },
+  { key: "java", name: "Java", code: `class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        Map<Integer, Integer> map = new HashMap<>();\n        for (int i = 0; i < nums.length; i++) {\n            int complement = target - nums[i];\n            if (map.containsKey(complement)) {\n                return new int[] { map.get(complement), i };\n            }\n            map.put(nums[i], i);\n        }\n        return new int[] {};\n    }\n}` },
+  { key: "javascript", name: "JavaScript", code: `function twoSum(nums, target) {\n  const map = new Map();\n  for (let i = 0; i < nums.length; i++) {\n    const complement = target - nums[i];\n    if (map.has(complement)) {\n      return [map.get(complement), i];\n    }\n    map.set(nums[i], i);\n  }\n  return [];\n}` },
+  { key: "go", name: "Go", code: `func twoSum(nums []int, target int) []int {\n    seen := make(map[int]int)\n    for i, num := range nums {\n        complement := target - num\n        if j, ok := seen[complement]; ok {\n            return []int{j, i}\n        }\n        seen[num] = i\n    }\n    return nil\n}` },
+  { key: "rust", name: "Rust", code: `fn two_sum(nums: Vec<i32>, target: i32) -> Vec<i32> {\n    use std::collections::HashMap;\n    let mut seen: HashMap<i32, usize> = HashMap::new();\n    for (i, &num) in nums.iter().enumerate() {\n        let complement = target - num;\n        if let Some(&j) = seen.get(&complement) {\n            return vec![j as i32, i as i32];\n        }\n        seen.insert(num, i);\n    }\n    vec![]\n}` },
 ]
 
 export default function HomePage() {
@@ -168,12 +134,6 @@ export default function HomePage() {
     retry: false,
   })
 
-  const { data: banners } = useQuery({
-    queryKey: ["banners"],
-    queryFn: () => api.get<Banner[]>("/site/banners"),
-    retry: false,
-  })
-
   const { data: faqs } = useQuery({
     queryKey: ["faqs"],
     queryFn: () => api.get<Faq[]>("/site/faqs"),
@@ -186,394 +146,323 @@ export default function HomePage() {
     retry: false,
   })
 
-  const heroBanner = banners?.[0]
-  const prizePool = (contests?.contests ?? []).reduce((sum, c) => sum + c.contest.prizePool, 0)
-
   return (
     <div className="overflow-x-clip">
-      {/* ============================== Hero ============================== */}
-      <section className="relative mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 pb-16 pt-16 text-center sm:pt-24">
-        {/* Floating gradient orbs */}
-        <motion.div
-          className="pointer-events-none absolute -left-32 top-0 h-96 w-96 rounded-full bg-orange-500/10 blur-3xl"
-          animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="pointer-events-none absolute -right-32 top-20 h-80 w-80 rounded-full bg-amber-500/10 blur-3xl"
-          animate={{ x: [0, -25, 0], y: [0, 25, 0] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="pointer-events-none absolute left-1/2 top-40 h-64 w-64 -translate-x-1/2 rounded-full bg-yellow-500/8 blur-3xl"
-          animate={{ scale: [1, 1.15, 1] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        />
+      {/* ============================== HERO ============================== */}
+      <section className="relative mx-auto max-w-6xl px-4 pb-16 pt-16 sm:pt-24">
+        <div className="grid gap-12 lg:grid-cols-[1fr_480px] lg:items-center">
+          {/* Left — copy */}
+          <div className="flex flex-col gap-6">
+            {/* Live badge */}
+            {contests && contests.contests.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400"
+              >
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                </span>
+                {contests.contests.length} contest{contests.contests.length > 1 ? "s" : ""} live
+              </motion.div>
+            )}
 
-        {/* Live pulse */}
-        {contests && contests.contests.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4 }}
-            className="relative z-10 flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-sm font-medium text-orange-700 dark:border-orange-800 dark:bg-orange-950/50 dark:text-orange-300"
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-orange-500" />
-            </span>
-            {contests.contests.length} contest{contests.contests.length > 1 ? "s" : ""} live now
-          </motion.div>
-        )}
-
-        {!contests && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-1.5 text-sm text-muted-foreground"
-          >
-            <Sparkles className="h-4 w-4 text-orange-500" aria-hidden />
-            {logo?.tagline ?? "Skill-based coding contests"}
-          </motion.div>
-        )}
-
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-          className="relative z-10 max-w-3xl text-4xl font-extrabold tracking-tight sm:text-6xl"
-        >
-          Compete. Solve.{" "}
-          <motion.span
-            className="bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-500 bg-clip-text text-transparent"
-            animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
-            transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-            style={{ backgroundSize: "200% 200%" }}
-          >
-            Win real prizes.
-          </motion.span>
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.25 }}
-          className="relative z-10 max-w-xl text-lg text-muted-foreground"
-        >
-          Join timed coding contests, race against other developers, and climb
-          the leaderboard for real prize money.
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.35 }}
-          className="relative z-10 flex flex-wrap items-center justify-center gap-3"
-        >
-          <ButtonLink href="/contests">
-            Browse contests <ArrowRight className="h-4 w-4" aria-hidden />
-          </ButtonLink>
-          <ButtonLink href="/problems" variant="outline">
-            Practice library
-          </ButtonLink>
-        </motion.div>
-
-        {contests && !isLoading && (
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="mt-4 grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3"
-          >
-            <Card className="relative overflow-hidden p-5 border-border/60 bg-card/80 backdrop-blur-sm">
-              <div className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg bg-orange-600/10 text-orange-600 dark:text-orange-400">
-                <Trophy className="h-4 w-4" aria-hidden />
+            {!contests && (
+              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground">
+                {logo?.tagline ?? "Skill-based coding contests"}
               </div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Contests hosted
-              </p>
-              <p className="mt-1 text-3xl font-extrabold tabular-nums tracking-tight">
-                <Countup value={contests.total} />
-              </p>
-            </Card>
-            <Card className="relative overflow-hidden p-5 border-border/60 bg-card/80 backdrop-blur-sm">
-              <div className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600/10 text-emerald-600 dark:text-emerald-400">
-                <Wallet className="h-4 w-4" aria-hidden />
-              </div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Live prize pool
-              </p>
-              <p className="mt-1 text-3xl font-extrabold tabular-nums tracking-tight text-emerald-600 dark:text-emerald-400">
-                <Countup value={prizePool} format={(n) => inr(Math.round(n))} />
-              </p>
-            </Card>
-            <Card className="relative overflow-hidden p-5 border-border/60 bg-card/80 backdrop-blur-sm">
-              <div className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600/10 text-blue-600 dark:text-blue-400">
-                <Code2 className="h-4 w-4" aria-hidden />
-              </div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Entry fee
-              </p>
-              <p className="mt-1 text-3xl font-extrabold tabular-nums tracking-tight">{inr(2000)}</p>
-            </Card>
-          </motion.div>
-        )}
+            )}
 
-        {heroBanner?.title && (
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              className="max-w-xl text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-[3.5rem] lg:leading-[1.1]"
+            >
+              Compete. Solve.{" "}
+              <span className="text-orange-500">Win real prizes.</span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg"
+            >
+              Timed coding contests with live leaderboards, instant judging, and
+              automatic prize payouts. Join thousands of developers sharpening
+              their skills.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="flex flex-wrap items-center gap-3"
+            >
+              <ButtonLink href="/register">
+                Start solving <ArrowRight className="h-4 w-4" aria-hidden />
+              </ButtonLink>
+              <ButtonLink href="/contests" variant="outline">
+                Browse contests
+              </ButtonLink>
+            </motion.div>
+          </div>
+
+          {/* Right — product preview */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-            className="w-full max-w-2xl"
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+            className="relative"
           >
-            <Card>
-              <CardContent className="p-5 text-left">
-                <Badge tone="teal">Announcement</Badge>
-                <h2 className="mt-2 text-lg font-semibold">{heroBanner.title}</h2>
-                {heroBanner.subtitle && (
-                  <p className="mt-1 text-sm text-muted-foreground">{heroBanner.subtitle}</p>
-                )}
-                {heroBanner.ctaText && heroBanner.ctaLink && (
-                  <Link
-                    href={heroBanner.ctaLink}
-                    className="mt-3 inline-block text-sm font-medium text-orange-600 hover:underline dark:text-orange-400"
-                  >
-                    {heroBanner.ctaText} →
-                  </Link>
-                )}
-              </CardContent>
-            </Card>
+            <div className="rounded-xl border border-border bg-card shadow-lg overflow-hidden">
+              {/* Title bar */}
+              <div className="flex items-center gap-2 border-b border-border bg-muted/30 px-4 py-2.5">
+                <div className="flex gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-zinc-600/40" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-zinc-600/40" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-zinc-600/40" />
+                </div>
+                <span className="ml-2 text-xs text-muted-foreground">workspace — Two Sum</span>
+              </div>
+              {/* Editor body */}
+              <div className="p-4 font-mono text-[13px] leading-[1.7]">
+                <p>
+                  <span className="text-orange-400">function</span>{" "}
+                  <span className="text-amber-300">twoSum</span>
+                  <span className="text-muted-foreground">(</span>
+                  <span className="text-zinc-400">nums</span>
+                  <span className="text-muted-foreground">,</span>{" "}
+                  <span className="text-zinc-400">target</span>
+                  <span className="text-muted-foreground">)</span>{" "}
+                  <span className="text-muted-foreground">{"{"}</span>
+                </p>
+                <p className="pl-4">
+                  <span className="text-orange-400">const</span>{" "}
+                  <span className="text-zinc-300">map</span>{" "}
+                  <span className="text-muted-foreground">=</span>{" "}
+                  <span className="text-orange-400">new</span>{" "}
+                  <span className="text-amber-300">Map</span>
+                  <span className="text-muted-foreground">();</span>
+                </p>
+                <p className="pl-4">
+                  <span className="text-orange-400">for</span>{" "}
+                  <span className="text-muted-foreground">(</span>
+                  <span className="text-orange-400">let</span>{" "}
+                  <span className="text-zinc-300">i</span>{" "}
+                  <span className="text-muted-foreground">=</span>{" "}
+                  <span className="text-emerald-400">0</span>
+                  <span className="text-muted-foreground">;</span>{" "}
+                  <span className="text-zinc-300">i</span>{" "}
+                  <span className="text-muted-foreground">&lt;</span>{" "}
+                  <span className="text-zinc-300">nums.length</span>
+                  <span className="text-muted-foreground">;</span>{" "}
+                  <span className="text-zinc-300">i++</span>
+                  <span className="text-muted-foreground">)</span>{" "}
+                  <span className="text-muted-foreground">{"{"}</span>
+                </p>
+                <p className="pl-8">
+                  <span className="text-orange-400">const</span>{" "}
+                  <span className="text-zinc-300">j</span>{" "}
+                  <span className="text-muted-foreground">=</span>{" "}
+                  <span className="text-zinc-300">map.get</span>
+                  <span className="text-muted-foreground">(</span>
+                  <span className="text-zinc-300">target</span>
+                  <span className="text-muted-foreground"> -</span>{" "}
+                  <span className="text-zinc-300">nums[i]</span>
+                  <span className="text-muted-foreground">);</span>
+                </p>
+                <p className="pl-8">
+                  <span className="text-orange-400">if</span>{" "}
+                  <span className="text-muted-foreground">(</span>
+                  <span className="text-zinc-300">j !== undefined</span>
+                  <span className="text-muted-foreground">)</span>{" "}
+                  <span className="text-orange-400">return</span>{" "}
+                  <span className="text-muted-foreground">[</span>
+                  <span className="text-zinc-300">j, i</span>
+                  <span className="text-muted-foreground">];</span>
+                </p>
+                <p className="pl-8">
+                  <span className="text-zinc-300">map.set</span>
+                  <span className="text-muted-foreground">(</span>
+                  <span className="text-zinc-300">nums[i]</span>
+                  <span className="text-muted-foreground">,</span>{" "}
+                  <span className="text-zinc-300">i</span>
+                  <span className="text-muted-foreground">);</span>
+                </p>
+                <p className="pl-4">
+                  <span className="text-muted-foreground">{"}"}</span>
+                </p>
+                <p>
+                  <span className="text-muted-foreground">{"}"}</span>
+                </p>
+                {/* Result line */}
+                <div className="mt-3 flex items-center gap-2 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-2">
+                  <span className="text-emerald-400 font-medium text-xs">Accepted</span>
+                  <span className="text-muted-foreground text-xs">—</span>
+                  <span className="text-xs text-muted-foreground">42ms</span>
+                  <span className="text-muted-foreground text-xs">·</span>
+                  <span className="text-xs text-muted-foreground">14.2 MB</span>
+                </div>
+              </div>
+            </div>
+            {/* Subtle glow behind the card */}
+            <div className="pointer-events-none absolute -inset-4 -z-10 rounded-2xl bg-orange-500/5 blur-2xl" />
           </motion.div>
-        )}
+        </div>
       </section>
 
-      {/* ========================== Winners wall ========================== */}
-      {winners && winners.length > 0 && (
-        <section className="py-8">
-          <div className="mx-auto max-w-6xl px-4">
-            <SectionHeading
-              eyebrow="Wall of fame"
-              title="Recent winners"
-              description="Prizes are credited automatically the moment a contest settles."
-            />
-          </div>
-          <Marquee speed={35} className="mt-8">
-            {winners.map((w) => (
-              <div
-                key={`${w.contest?.title}-${w.user?.firstName}-${w.rank}-${w.creditedAt}`}
-                className="flex w-72 shrink-0 items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm"
+      {/* ========================== LIVE CONTESTS ========================== */}
+      {contests && contests.contests.length > 0 && (
+        <section className="border-y border-border bg-muted/20">
+          <div className="mx-auto max-w-6xl px-4 py-12">
+            <div className="mb-6 flex items-end justify-between">
+              <SectionHeading
+                align="left"
+                eyebrow="Live now"
+                title="Active contests"
+                description="Join before the timer runs out"
+              />
+              <Link
+                href="/contests"
+                className="mb-1 hidden shrink-0 items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:inline-flex"
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-bold text-amber-700 dark:bg-amber-500/15 dark:text-amber-400">
-                  #{w.rank}
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">
-                    {w.user ? `${w.user.firstName} ${w.user.lastName ?? ""}`.trim() : "Anonymous"}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">{w.contest?.title}</p>
-                </div>
-                <p className="ml-auto shrink-0 text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                  +{inr(w.prizeAmount)}
-                </p>
-              </div>
-            ))}
-          </Marquee>
-        </section>
-      )}
+                View all <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+              </Link>
+            </div>
 
-      {/* ============================ Why us ============================== */}
-      {whyItems && whyItems.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 py-14">
-          <SectionHeading
-            eyebrow="Why SkillHill"
-            title="Built for serious solvers"
-            description="Fair judging, real problems, and instant feedback — everything you need to improve."
-          />
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {whyItems.map((item, i) => (
-              <Reveal key={item._id} delay={i * 0.08}>
-                <Card className="h-full">
-                  <CardContent className="flex h-full flex-col gap-2 p-5">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-600/10 text-orange-600 dark:text-orange-400">
-                      {whyIcons[item.icon] ?? <Sparkles className="h-5 w-5" />}
-                    </span>
-                    <h3 className="font-semibold">{item.title}</h3>
-                    <p className="text-sm text-muted-foreground">{item.description}</p>
-                  </CardContent>
-                </Card>
-              </Reveal>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ========================== How it works ========================== */}
-      <section className="border-y border-border bg-muted/40">
-        <div className="mx-auto max-w-6xl px-4 py-14">
-          <SectionHeading
-            eyebrow="How it works"
-            title="From sign-up to payout in four steps"
-          />
-          <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {steps.map((step, i) => (
-              <Reveal as="li" key={step.title} delay={i * 0.08}>
-                <Card className="relative h-full">
-                  <CardContent className="flex h-full flex-col gap-3 p-5">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-600 text-white font-bold text-sm tabular-nums">
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
-                      {i < steps.length - 1 && (
-                        <ChevronRight className="hidden h-4 w-4 text-muted-foreground lg:block" aria-hidden />
+            <div className="space-y-2">
+              {contests.contests.map(({ contest, participantCount }) => (
+                <Link
+                  key={contest._id}
+                  href={`/contests/${contest._id}`}
+                  className="group flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition-colors hover:border-orange-500/30 hover:bg-accent/50"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-600/10 text-orange-500">
+                    <Trophy className="h-4 w-4" aria-hidden />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="truncate text-sm font-semibold group-hover:text-orange-500">
+                        {contest.title}
+                      </h3>
+                      {contest.problemType === "mcq" && (
+                        <Badge tone="amber" className="shrink-0">MCQ</Badge>
+                      )}
+                      {contest.problemType === "coding" && (
+                        <Badge tone="blue" className="shrink-0">Coding</Badge>
+                      )}
+                      {contest.problemType === "mixed" && (
+                        <Badge tone="teal" className="shrink-0">Mixed</Badge>
                       )}
                     </div>
-                    <div>
-                      <h3 className="font-semibold">{step.title}</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">{step.text}</p>
+                    <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Users className="h-3 w-3" aria-hidden />
+                        {participantCount}
+                      </span>
+                      <span>{inr(contest.prizePool)} pool</span>
+                      {contest.type === "paid" && (
+                        <span>{inr(contest.entryFee)} entry</span>
+                      )}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                  <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-orange-500" aria-hidden />
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ========================= HOW IT WORKS ========================= */}
+      <section className="mx-auto max-w-6xl px-4 py-16">
+        <SectionHeading
+          eyebrow="How it works"
+          title="From sign-up to payout"
+        />
+        <div className="relative mt-12">
+          {/* Connector line (desktop) */}
+          <div className="absolute left-0 right-0 top-5 hidden h-px bg-border lg:block" />
+          <ol className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {steps.map((step, i) => (
+              <Reveal as="li" key={step.title} delay={i * 0.08}>
+                <div className="relative flex flex-col items-center text-center">
+                  <span className="relative z-10 mb-4 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground">
+                    {step.icon}
+                  </span>
+                  <h3 className="text-sm font-semibold">{step.title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{step.text}</p>
+                </div>
               </Reveal>
             ))}
           </ol>
         </div>
       </section>
 
-      {/* ======================== Features ========================== */}
-      <Reveal>
-        <Features3 />
-      </Reveal>
-
-      {/* ========================== Stats ========================== */}
-      <section className="relative overflow-hidden border-y border-border bg-gradient-to-b from-muted/40 to-background py-14">
-        <div className="mx-auto max-w-6xl px-4">
-          <SectionHeading
-            eyebrow="By the numbers"
-            title="A growing arena"
-          />
-          <div className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-3">
-            {[
-              { label: "Contests hosted", value: contests?.total ?? 0, icon: <Trophy className="h-5 w-5" /> },
-              { label: "Live prize pool", value: prizePool, format: (n: number) => inr(Math.round(n)), icon: <Wallet className="h-5 w-5" /> },
-              { label: "Languages supported", value: 6, icon: <Code2 className="h-5 w-5" /> },
-            ].map((stat, i) => (
-              <Reveal key={stat.label} delay={i * 0.1}>
-                <Card className="relative overflow-hidden p-5 text-center border-border/60 bg-card/80 backdrop-blur-sm">
-                  <div className="mb-3 flex justify-center text-orange-500">
-                    {stat.icon}
-                  </div>
-                  <p className="text-3xl font-extrabold tabular-nums tracking-tight">
-                    <Countup value={stat.value} format={stat.format} />
-                  </p>
-                  <p className="mt-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {stat.label}
-                  </p>
-                </Card>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ========================== Languages ========================== */}
-      <section className="mx-auto max-w-6xl px-4 py-14">
-        <SectionHeading
-          eyebrow="Languages"
-          title="Code in your language"
-          description="We support the most popular languages for competitive programming."
-        />
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          {["JavaScript", "Python", "Java", "C++", "Go", "TypeScript"].map((lang, i) => (
-            <motion.div
-              key={lang}
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: i * 0.06 }}
-              whileHover={{ scale: 1.08, y: -2 }}
-              className="cursor-default rounded-xl border border-border bg-card px-5 py-3 text-sm font-medium shadow-sm transition-colors hover:border-orange-300 hover:text-orange-600 dark:hover:border-orange-700 dark:hover:text-orange-400"
-            >
-              {lang}
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* ========================= Live contests ========================== */}
-      <section className="mx-auto max-w-6xl px-4 py-14">
-        <div className="mb-8 flex items-end justify-between gap-4">
-          <SectionHeading
-            align="left"
-            eyebrow="The arena"
-            title="Live contests"
-            description="Join now before the timer starts"
-          />
-          <Link
-            href="/contests"
-            className="mb-1 hidden shrink-0 items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:inline-flex"
-          >
-            View all <ArrowRight className="h-4 w-4" aria-hidden />
-          </Link>
-        </div>
-
-        {isLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-44" />
-            ))}
-          </div>
-        ) : contests && contests.contests.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {contests.contests.map(({ contest, participantCount }, i) => (
-              <Reveal key={contest._id} delay={(i % 3) * 0.08}>
-                <ContestCard contest={contest} participants={participantCount} />
-              </Reveal>
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            title="No live contests right now"
-            hint="New contests are announced regularly. Warm up in the practice library while you wait."
-          />
-        )}
-      </section>
-
-      {/* ======================== Practice teaser ========================= */}
-      <section className="border-y border-border bg-muted/40">
-        <div className="mx-auto max-w-6xl px-4 py-14">
-          <SectionHeading
-            eyebrow="Practice library"
-            title="Sharpen your edge, free"
-            description="Problems from past contests and open practice sets — no entry fee, no timer pressure."
-          />
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            {difficultyCards.map((d, i) => (
-              <Reveal key={d.label} delay={i * 0.08}>
-                <Link href={`/problems?difficulty=${d.label.toLowerCase()}`} className="group block h-full">
-                  <Card className={`relative h-full border bg-card transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-md ${d.tone}`}>
-                    <CardContent className="flex h-full flex-col gap-2 p-5">
-                      <div className="flex items-center justify-between">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
-                          <Code2 className="h-4 w-4" aria-hidden />
-                        </span>
-                        <Badge tone={d.label === "Easy" ? "green" : d.label === "Medium" ? "amber" : "red"}>
-                          {d.label}
-                        </Badge>
-                      </div>
-                      <h3 className="mt-1 font-semibold">{d.label} problems</h3>
-                      <p className="text-sm text-muted-foreground">{d.text}</p>
-                      <span className="mt-auto flex items-center gap-1 pt-2 text-sm font-medium text-orange-600 group-hover:underline dark:text-orange-400">
-                        Start practicing <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-                      </span>
-                    </CardContent>
-                    {/* Code decoration per difficulty */}
-                    <div className="pointer-events-none absolute bottom-2 right-3 font-mono text-[10px] leading-tight text-muted-foreground/30">
-                      {d.label === "Easy" && "for (let i = 0;)"}
-                      {d.label === "Medium" && "dp[i] = Math.max()"}
-                      {d.label === "Hard" && "while (queue.length)"}
+      {/* =================== WHY SKILLHILL (editorial) =================== */}
+      {whyItems && whyItems.length > 0 && (
+        <section className="border-y border-border bg-muted/20">
+          <div className="mx-auto max-w-6xl px-4 py-16">
+            <SectionHeading
+              eyebrow="Why SkillHill"
+              title="Built for serious solvers"
+              description="Fair judging, real problems, and instant feedback."
+            />
+            <div className="mt-12 grid gap-8 md:grid-cols-3">
+              {whyItems.slice(0, 3).map((item, i) => (
+                <Reveal key={item._id} delay={i * 0.1}>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-600/10 text-orange-500">
+                      {item.icon === "trophy" ? <Trophy className="h-5 w-5" aria-hidden /> :
+                       item.icon === "users" ? <Users className="h-5 w-5" aria-hidden /> :
+                       <Trophy className="h-5 w-5" aria-hidden />}
                     </div>
-                  </Card>
+                    <div>
+                      <h3 className="text-lg font-semibold">{item.title}</h3>
+                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
+                    </div>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ========================== LANGUAGES ========================== */}
+      <LanguageShowcase />
+
+      {/* ========================= PRACTICE ========================== */}
+      <section className="border-y border-border bg-muted/20">
+        <div className="mx-auto max-w-6xl px-4 py-16">
+          <SectionHeading
+            eyebrow="Practice"
+            title="Free problems, no strings"
+            description="Problems from past contests and open practice sets. No entry fee, no timer."
+          />
+          <div className="mt-12 grid gap-6 sm:grid-cols-3">
+            {[
+              { label: "Easy", count: "Build fundamentals", tone: "text-emerald-500 border-emerald-500/30", examples: "Two Sum, Valid Parentheses" },
+              { label: "Medium", count: "Sharpen problem solving", tone: "text-amber-500 border-amber-500/30", examples: "LRU Cache, Word Search" },
+              { label: "Hard", count: "Push your limits", tone: "text-rose-500 border-rose-500/30", examples: "Merge Intervals, Median" },
+            ].map((d, i) => (
+              <Reveal key={d.label} delay={i * 0.1}>
+                <Link href={`/problems?difficulty=${d.label.toLowerCase()}`} className="group block">
+                  <div className={cn(
+                    "rounded-xl border bg-card p-6 transition-all duration-200 hover:shadow-md",
+                    d.tone,
+                  )}>
+                    <div className="flex items-center justify-between">
+                      <span className={cn("text-lg font-bold", d.tone.split(" ")[0])}>{d.label}</span>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" aria-hidden />
+                    </div>
+                    <p className="mt-1 text-sm text-muted-foreground">{d.count}</p>
+                    <p className="mt-3 font-mono text-xs text-muted-foreground/60">{d.examples}</p>
+                  </div>
                 </Link>
               </Reveal>
             ))}
@@ -581,80 +470,17 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ============================== FAQs ============================== */}
-      {faqs && faqs.length > 0 && (
-        <Reveal>
-          <Faq6
-            badge="FAQ"
-            title="Questions"
-            faqs={faqs.map((f) => ({
-              id: f._id,
-              question: f.question,
-              answer: f.answer,
-            }))}
-            className="px-4 py-14"
-          />
-        </Reveal>
-      )}
-
-      {/* =============================== CTA ============================== */}
-      <section className="mx-auto max-w-6xl px-4 pb-16">
-        <Reveal>
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-700 via-orange-600 to-amber-600 px-6 py-14 text-center text-white sm:px-12">
-            <div className="pointer-events-none absolute -left-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-2xl" />
-            <div className="pointer-events-none absolute -bottom-20 -right-10 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-
-            {/* Mini workspace preview */}
-            <div className="mx-auto mb-8 max-w-lg overflow-hidden rounded-xl border border-white/20 bg-black/30 text-left shadow-2xl backdrop-blur-sm">
-              <div className="flex items-center gap-1.5 border-b border-white/10 px-3 py-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-red-400/80" />
-                <span className="h-2.5 w-2.5 rounded-full bg-yellow-400/80" />
-                <span className="h-2.5 w-2.5 rounded-full bg-green-400/80" />
-                <span className="ml-2 text-xs text-white/50">workspace — Two Sum</span>
-              </div>
-              <div className="p-4 font-mono text-xs leading-relaxed text-white/80">
-                <p><span className="text-orange-300">function</span> <span className="text-yellow-200">solve</span>(nums, target) {'{'}</p>
-                <p className="pl-4"><span className="text-orange-300">const</span> map = <span className="text-orange-300">new</span> Map();</p>
-                <p className="pl-4"><span className="text-orange-300">for</span> (<span className="text-orange-300">let</span> i = <span className="text-emerald-300">0</span>; i {'<'} nums.length; i++) {'{'}</p>
-                <p className="pl-8"><span className="text-orange-300">const</span> j = map.<span className="text-yellow-200">get</span>(target - nums[i]);</p>
-                <p className="pl-8"><span className="text-orange-300">if</span> (j !== <span className="text-orange-300">undefined</span>) <span className="text-orange-300">return</span> [j, i];</p>
-                <p className="pl-8">map.<span className="text-yellow-200">set</span>(nums[i], i);</p>
-                <p className="pl-4">{'}'}</p>
-                <p>{'}'}</p>
-                <p className="mt-2 text-emerald-300">{'>'} Accepted — 42ms · 14.2 MB</p>
-              </div>
-            </div>
-
-            <Rocket className="mx-auto h-10 w-10" aria-hidden />
-            <h2 className="mx-auto mt-4 max-w-xl text-3xl font-extrabold tracking-tight">
-              Ready to test your skills?
-            </h2>
-            <p className="mx-auto mt-3 max-w-md text-orange-100">
-              Join a live contest or start with the free practice library. Prizes
-              are paid out automatically to your wallet.
-            </p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <ButtonLink href="/register" className="bg-white text-orange-700 hover:bg-orange-50">
-                Get started free <ArrowRight className="h-4 w-4" aria-hidden />
-              </ButtonLink>
-              <ButtonLink
-                href="/contests"
-                variant="ghost-white"
-                className="border border-white/40"
-              >
-                <BrainCircuit className="h-4 w-4" aria-hidden /> View contests
-              </ButtonLink>
-            </div>
-          </div>
-        </Reveal>
-      </section>
-
-      {/* ========================= Winner avatars ======================== */}
+      {/* ======================== WINNERS ======================== */}
       {winners && winners.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 pb-16">
-          <div className="flex flex-col items-center gap-3 text-center">
+        <section className="mx-auto max-w-6xl px-4 py-16">
+          <SectionHeading
+            eyebrow="Payouts"
+            title="Winners get paid instantly"
+            description="Prizes are credited automatically the moment a contest settles."
+          />
+          <div className="mt-10 flex flex-col items-center gap-4">
             <div className="flex -space-x-2">
-              {winners.slice(0, 6).map((w, i) => (
+              {winners.slice(0, 8).map((w, i) => (
                 <Avatar
                   key={`${w.user?.firstName}-${i}`}
                   name={w.user ? `${w.user.firstName} ${w.user.lastName ?? ""}`.trim() : "Anonymous"}
@@ -664,12 +490,153 @@ export default function HomePage() {
                 />
               ))}
             </div>
-            <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">{winners.length}+ recent winners</span>{" "}
-              already paid out. Could be you next.
-            </p>
+            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+              <span>
+                <span className="font-semibold text-foreground">{winners.length}+ winners</span> paid out
+              </span>
+              <span className="hidden sm:inline">·</span>
+              <span>
+                <span className="font-semibold text-emerald-500">
+                  {winners.reduce((sum, w) => sum + w.prizeAmount, 0).toLocaleString("en-IN")}
+                </span>{" "}
+                total prizes
+              </span>
+            </div>
           </div>
         </section>
+      )}
+
+      {/* ========================== FAQ ========================== */}
+      {faqs && faqs.length > 0 && (
+        <section className="mx-auto max-w-6xl px-4 py-16">
+          <SectionHeading
+            eyebrow="FAQ"
+            title="Common questions"
+          />
+          <div className="mx-auto mt-10 max-w-3xl">
+            <div className="flex flex-col gap-2">
+              {faqs.map((faq, i) => (
+                <Reveal key={faq._id} delay={i * 0.04}>
+                  <FaqItem
+                    question={faq.question}
+                    answer={faq.answer}
+                    defaultOpen={i === 0}
+                  />
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ============================= CTA ============================= */}
+      <section className="border-y border-border">
+        <div className="mx-auto max-w-6xl px-4 py-20 text-center">
+          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+            Ready to compete?
+          </h2>
+          <p className="mx-auto mt-4 max-w-md text-base text-muted-foreground">
+            Your next problem is waiting. Join a contest, solve it faster than
+            everyone else, and win.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <ButtonLink href="/register">
+              Start solving <ArrowRight className="h-4 w-4" aria-hidden />
+            </ButtonLink>
+            <ButtonLink href="/contests" variant="outline">
+              Explore contests
+            </ButtonLink>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Language Showcase — interactive code preview                        */
+/* ------------------------------------------------------------------ */
+
+function LanguageShowcase() {
+  const [active, setActive] = useState(0)
+  const lang = languages[active]
+
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-16">
+      <SectionHeading
+        eyebrow="Languages"
+        title="Code in your language"
+        description="Six popular languages with full editor support."
+      />
+
+      {/* Language tabs */}
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+        {languages.map((l, i) => (
+          <button
+            key={l.key}
+            type="button"
+            onClick={() => setActive(i)}
+            className={cn(
+              "rounded-md px-4 py-2 text-sm font-medium transition-colors cursor-pointer",
+              i === active
+                ? "bg-orange-600 text-white"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground",
+            )}
+          >
+            {l.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Code preview */}
+      <Reveal>
+        <div className="mx-auto mt-6 max-w-2xl overflow-hidden rounded-xl border border-border bg-card shadow-lg">
+          <div className="flex items-center gap-2 border-b border-border bg-muted/30 px-4 py-2.5">
+            <div className="flex gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-zinc-600/40" />
+              <span className="h-2.5 w-2.5 rounded-full bg-zinc-600/40" />
+              <span className="h-2.5 w-2.5 rounded-full bg-zinc-600/40" />
+            </div>
+            <span className="ml-2 text-xs text-muted-foreground">solution.{lang.key === "cpp" ? "cpp" : lang.key === "java" ? "java" : lang.key === "rust" ? "rs" : lang.key === "go" ? "go" : lang.key}</span>
+          </div>
+          <pre className="overflow-x-auto p-4 font-mono text-[13px] leading-[1.7]">
+            <code>{lang.code}</code>
+          </pre>
+        </div>
+      </Reveal>
+    </section>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* FAQ Item — simple expandable                                       */
+/* ------------------------------------------------------------------ */
+
+function FaqItem({ question, answer, defaultOpen = false }: { question: string; answer: string; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen)
+
+  return (
+    <div className="rounded-lg border border-border bg-card">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+        className="flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-4 text-left"
+      >
+        <span className="text-sm font-medium">{question}</span>
+        <span className={cn(
+          "shrink-0 text-muted-foreground transition-transform duration-200",
+          open ? "rotate-180" : "",
+        )}>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </span>
+      </button>
+      {open && (
+        <div className="px-5 pb-4 text-sm leading-relaxed text-muted-foreground">
+          {answer}
+        </div>
       )}
     </div>
   )
