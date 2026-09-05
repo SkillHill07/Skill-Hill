@@ -25,6 +25,7 @@ import {
   getContestProblemSchema,
   getPracticeProblemSchema,
   getPracticeProblemBySlugSchema,
+  checkMcqAnswerSchema,
 } from "./problem.validation.js"
 import type { Request, Response, NextFunction } from "express"
 
@@ -159,6 +160,54 @@ practiceProblemRouter.get(
     try {
       const problem = await problemService.getPracticeProblemBySlug(req.params.slug as string)
       sendSuccess(res, problem)
+    } catch (err) {
+      next(err)
+    }
+  },
+)
+
+/**
+ * @openapi
+ * /problems/{id}/check-mcq:
+ *   post:
+ *     tags: [Problems]
+ *     summary: Check an MCQ answer (no auth required, no persistence)
+ *     description: >
+ *       Returns whether the selected option is correct and the points awarded.
+ *       Does not create a submission or affect any leaderboard.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [selectedOption]
+ *             properties:
+ *               selectedOption: { type: integer, description: "0-based index into options" }
+ *     responses:
+ *       200:
+ *         description: MCQ answer check result
+ *       400:
+ *         description: Invalid option index or not an MCQ problem
+ *       404:
+ *         description: Problem not found
+ */
+practiceProblemRouter.post(
+  "/:id/check-mcq",
+  validateRequest(checkMcqAnswerSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await problemService.checkMcqAnswer(
+        req.params.id as string,
+        req.body.selectedOption as number,
+      )
+      sendSuccess(res, result)
     } catch (err) {
       next(err)
     }

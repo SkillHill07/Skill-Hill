@@ -26,32 +26,32 @@ const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "SkillHill — ₹20 coding contests, real cash prizes",
+    default: "SkillHill — Competitive coding contests with real prizes",
     template: "%s · SkillHill",
   },
   description:
-    "Join skill-based coding contests for ₹20. Solve problems against the clock, climb live leaderboards, and win prize money credited to your wallet.",
+    "Join timed coding contests, solve problems against the clock, climb live leaderboards, and win prize money credited to your wallet.",
   keywords: [
     "coding contest",
     "competitive programming",
-    "coding competition India",
-    "win money coding",
+    "coding competition",
     "programming challenge",
+    "coding practice",
   ],
   openGraph: {
     type: "website",
     siteName: "SkillHill",
-    title: "SkillHill — ₹20 coding contests, real cash prizes",
+    title: "SkillHill — Competitive coding contests with real prizes",
     description:
-      "Skill-based coding contests. Pay ₹20 to enter, compete on live leaderboards, win prize money.",
+      "Timed coding contests with live leaderboards, instant judging, and automatic prize payouts.",
     url: SITE_URL,
     locale: "en_IN",
   },
   twitter: {
     card: "summary_large_image",
-    title: "SkillHill — ₹20 coding contests, real cash prizes",
+    title: "SkillHill — Competitive coding contests with real prizes",
     description:
-      "Skill-based coding contests. Pay ₹20 to enter, compete on live leaderboards, win prize money.",
+      "Timed coding contests with live leaderboards, instant judging, and automatic prize payouts.",
   },
   robots: {
     index: true,

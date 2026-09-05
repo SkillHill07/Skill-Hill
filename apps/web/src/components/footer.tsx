@@ -50,8 +50,8 @@ export function Footer() {
             SkillHill
           </p>
           <p className="max-w-xs text-sm text-muted-foreground">
-            Skill-based coding contests. Pay ₹20 to enter, solve against the
-            clock, and win prize money credited straight to your wallet.
+            Competitive coding contests with live leaderboards, instant judging,
+            and automatic prize payouts to your wallet.
           </p>
         </div>
 

@@ -85,10 +85,15 @@ async function listContests(
   }
   if (requestedStatus === "active") {
     query.status = "active"
-    query.startTime = { $lte: now }
-    query.endTime = { $gte: now }
+    // Eternal contests are always active (no endTime check); timed contests
+    // must be within their [startTime, endTime] window.
+    query.$or = [
+      { isEternal: true },
+      { startTime: { $lte: now }, endTime: { $gte: now } },
+    ]
   } else if (requestedStatus === "upcoming") {
     query.status = "active"
+    query.isEternal = { $ne: true }
     query.startTime = { $gt: now }
   } else if (requestedStatus === "settled") {
     query.status = "settled"
@@ -98,6 +103,10 @@ async function listContests(
     query.status = "cancelled"
   } else if (requestedStatus === "draft") {
     query.status = "draft"
+  } else if (requestedStatus === "always_open") {
+    // Eternal contests that are active — always joinable
+    query.status = "active"
+    query.isEternal = true
   } else {
     // Default: active + upcoming (public-facing)
     query.status = "active"
@@ -177,6 +186,8 @@ async function createContest(input: CreateContestBody, createdBy: string): Promi
     slug,
     status: "draft",
     createdBy,
+    // Eternal contests have no endTime.
+    endTime: input.isEternal ? null : input.endTime,
     // Free contests never store a fee. Paid contests are guaranteed to have a
     // positive entryFee by the create validation (superRefine).
     entryFee: input.type === "free" ? 0 : (input.entryFee as number),
@@ -234,18 +245,19 @@ async function publishContest(id: string): Promise<IContest> {
   contest.status = "active"
   await contest.save()
 
-  // Schedule the auto-freeze job. If Redis is down, log it and continue —
-  // an admin can still freeze the contest manually via POST /contests/:id/freeze.
-  try {
-    await scheduleContestFreeze(contest._id.toString(), contest.endTime)
-  } catch (err) {
-    logger.error(
-      { contestId: id, err: (err as Error).message },
-      "freeze_job_schedule_failed",
-    )
+  // Eternal contests never freeze — no endTime means no auto-schedule.
+  if (!contest.isEternal && contest.endTime) {
+    try {
+      await scheduleContestFreeze(contest._id.toString(), contest.endTime)
+    } catch (err) {
+      logger.error(
+        { contestId: id, err: (err as Error).message },
+        "freeze_job_schedule_failed",
+      )
+    }
   }
 
-  logger.info({ contestId: id, endTime: contest.endTime }, "contest_published")
+  logger.info({ contestId: id, endTime: contest.endTime, isEternal: contest.isEternal }, "contest_published")
   return contest
 }
 
@@ -287,6 +299,8 @@ async function cancelContest(id: string, reason?: string): Promise<IContest> {
 /**
  * Freeze: active → frozen. Called by the Upstash job worker at endTime
  * (server-authoritative) or by an admin.
+ *
+ * Eternal contests can be frozen manually but never via the job queue.
  */
 async function freezeContest(id: string): Promise<IContest> {
   const contest = await getContestOrThrow(id)

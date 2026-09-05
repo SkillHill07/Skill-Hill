@@ -17,6 +17,7 @@ interface ContestsResponse {
 
 const STATUS_TABS = [
   { key: "active", label: "Live" },
+  { key: "always_open", label: "Always Open" },
   { key: "upcoming", label: "Upcoming" },
   { key: "settled", label: "Past" },
 ] as const
@@ -103,8 +104,16 @@ export default function ContestsPage() {
         <EmptyState title="Could not load contests" hint="The API may be offline — try again later." />
       ) : data.contests.length === 0 ? (
         <EmptyState
-          title={status === "active" ? "No live contests right now" : "Nothing here yet"}
-          hint={status === "active" ? "Check back soon — new contests are added regularly." : undefined}
+          title={
+            status === "active" ? "No live contests right now"
+            : status === "always_open" ? "No always-open contests yet"
+            : "Nothing here yet"
+          }
+          hint={
+            status === "active" ? "Check back soon — new contests are added regularly."
+            : status === "always_open" ? "Free practice contests that never close will appear here."
+            : undefined
+          }
         />
       ) : (
         <>

@@ -39,6 +39,7 @@ export const createProblemSchema = z.object({
     testCases: z.array(testCaseSchema).default([]),
     options: z.array(z.string().min(1, "Option text cannot be empty")).optional(),
     correctAnswer: z.number().int("correctAnswer must be an integer").nonnegative("correctAnswer cannot be negative").nullable().optional(),
+    explanation: z.string().max(5000, "Explanation must be at most 5000 characters").optional(),
   }).superRefine((data, ctx) => {
     const options = data.options
     if (data.type === "mcq") {
@@ -98,6 +99,7 @@ export const updateProblemSchema = z.object({
     status: z.enum(["draft", "published"]).optional(),
     options: z.array(z.string().min(1, "Option text cannot be empty")).optional(),
     correctAnswer: z.number().int("correctAnswer must be an integer").nonnegative("correctAnswer cannot be negative").nullable().optional(),
+    explanation: z.string().max(5000, "Explanation must be at most 5000 characters").optional(),
   }).superRefine((data, ctx) => {
     // Switching to mcq requires options + a valid answer index.
     if (data.type === "mcq") {
@@ -196,6 +198,18 @@ export const removeTestCaseSchema = z.object({
     contestId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid contest id"),
     problemId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid problem id"),
     testCaseId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid test case id"),
+  }),
+})
+
+export const checkMcqAnswerSchema = z.object({
+  params: z.object({
+    id: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid problem id"),
+  }),
+  body: z.object({
+    selectedOption: z
+      .number()
+      .int("selectedOption must be an integer")
+      .nonnegative("selectedOption cannot be negative"),
   }),
 })
 

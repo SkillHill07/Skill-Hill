@@ -154,7 +154,8 @@ export interface Contest {
   description: string
   problemIds: string[]
   startTime: string
-  endTime: string
+  endTime: string | null
+  isEternal: boolean
   type: ContestType // "free" forces entryFee = 0
   entryFee: number // paise (0 for free contests)
   prizePool: number // paise

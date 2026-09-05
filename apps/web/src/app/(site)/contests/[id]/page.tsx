@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
-import { ArrowRight, Clock, ListChecks, Trophy, Users } from "lucide-react"
+import { ArrowRight, Clock, Infinity as InfinityIcon, ListChecks, Trophy, Users } from "lucide-react"
 import { api, getTurnstileToken } from "@/lib/api"
 import { formatDuration, formatDate, inr } from "@/lib/format"
 import { ContestStatusBadge } from "@/components/status-badge"
@@ -23,7 +23,8 @@ interface Contest {
   maxParticipants: number | null
   status: string
   startTime: string
-  endTime: string
+  endTime: string | null
+  isEternal: boolean
   rules: string
   problemIds: Problem[]
 }
@@ -133,6 +134,9 @@ export default function ContestDetailPage() {
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <ContestStatusBadge status={contest.status} />
+              {contest.isEternal && (
+                <Badge tone="blue"><InfinityIcon className="h-3 w-3" /> Always Open</Badge>
+              )}
               <Badge tone={contest.type === "paid" ? "teal" : "slate"}>
                 {contest.type === "paid" ? "Paid contest" : "Free contest"}
               </Badge>
@@ -266,9 +270,11 @@ export default function ContestDetailPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Ends</span>
-                <span className="font-semibold">{formatDate(contest.endTime)}</span>
+                <span className="font-semibold">
+                  {contest.isEternal ? "Never" : formatDate(contest.endTime)}
+                </span>
               </div>
-              {isLive && (
+              {isLive && !contest.isEternal && contest.endTime && (
                 <div className="flex items-center justify-between border-t border-border pt-3">
                   <span className="flex items-center gap-1 text-muted-foreground">
                     <Clock className="h-4 w-4" aria-hidden /> Time left

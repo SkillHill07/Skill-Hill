@@ -13,7 +13,6 @@ import {
   ChevronRight,
   Rocket,
   Sparkles,
-  Terminal,
   Trophy,
   Users,
   Wallet,
@@ -29,7 +28,6 @@ import {
 } from "@/components/marketing"
 import { Faq6 } from "@/components/watermelon-ui/faq-6"
 import Features3 from "@/components/watermelon-ui/feature-3"
-import Testimonials4 from "@/components/watermelon-ui/testimonials-4"
 import { Badge, Card, CardContent, EmptyState, Skeleton } from "@/components/ui"
 import { cn } from "@skillcontest/ui"
 import { inr } from "@/lib/format"
@@ -115,12 +113,12 @@ const steps = [
   {
     icon: <BadgeCheck className="h-5 w-5" aria-hidden />,
     title: "Create a free account",
-    text: "Sign up in seconds. No credit card needed until you join a paid contest.",
+    text: "Sign up in seconds and access the practice library immediately.",
   },
   {
     icon: <Wallet className="h-5 w-5" aria-hidden />,
-    title: "Join a contest for ₹20",
-    text: "Pick a timed contest, pay the entry fee through Razorpay, and lock in your seat.",
+    title: "Join a contest",
+    text: "Pick a timed contest, pay the entry fee, and lock in your seat.",
   },
   {
     icon: <Clock3 className="h-5 w-5" aria-hidden />,
@@ -263,8 +261,8 @@ export default function HomePage() {
           transition={{ duration: 0.6, delay: 0.25 }}
           className="relative z-10 max-w-xl text-lg text-muted-foreground"
         >
-          Pay ₹20 to enter a timed coding contest, race the clock against other
-          developers, and climb the leaderboard for prize money.
+          Join timed coding contests, race against other developers, and climb
+          the leaderboard for real prize money.
         </motion.p>
 
         <motion.div
@@ -390,7 +388,7 @@ export default function HomePage() {
           <SectionHeading
             eyebrow="Why SkillHill"
             title="Built for serious solvers"
-            description="Everything you need to compete at your best — no distractions."
+            description="Fair judging, real problems, and instant feedback — everything you need to improve."
           />
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {whyItems.map((item, i) => (
@@ -454,12 +452,11 @@ export default function HomePage() {
             eyebrow="By the numbers"
             title="A growing arena"
           />
-          <div className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-4">
+          <div className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-3">
             {[
-              { label: "Problems solved", value: 12400, icon: <Code2 className="h-5 w-5" /> },
-              { label: "Total prizes paid", value: 850000, format: (n: number) => inr(Math.round(n)), icon: <Wallet className="h-5 w-5" /> },
-              { label: "Active coders", value: 3200, icon: <Users className="h-5 w-5" /> },
-              { label: "Contests hosted", value: 180, icon: <Trophy className="h-5 w-5" /> },
+              { label: "Contests hosted", value: contests?.total ?? 0, icon: <Trophy className="h-5 w-5" /> },
+              { label: "Live prize pool", value: prizePool, format: (n: number) => inr(Math.round(n)), icon: <Wallet className="h-5 w-5" /> },
+              { label: "Languages supported", value: 6, icon: <Code2 className="h-5 w-5" /> },
             ].map((stat, i) => (
               <Reveal key={stat.label} delay={i * 0.1}>
                 <Card className="relative overflow-hidden p-5 text-center border-border/60 bg-card/80 backdrop-blur-sm">
@@ -537,7 +534,7 @@ export default function HomePage() {
         ) : (
           <EmptyState
             title="No live contests right now"
-            hint="New contests are announced regularly — check the contest list or warm up in the practice library."
+            hint="New contests are announced regularly. Warm up in the practice library while you wait."
           />
         )}
       </section>
@@ -583,11 +580,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* ======================== Testimonials ====================== */}
-      <Reveal>
-        <Testimonials4 />
-      </Reveal>
 
       {/* ============================== FAQs ============================== */}
       {faqs && faqs.length > 0 && (
@@ -635,11 +627,11 @@ export default function HomePage() {
 
             <Rocket className="mx-auto h-10 w-10" aria-hidden />
             <h2 className="mx-auto mt-4 max-w-xl text-3xl font-extrabold tracking-tight">
-              Your first win is one contest away
+              Ready to test your skills?
             </h2>
             <p className="mx-auto mt-3 max-w-md text-orange-100">
-              Join a live contest in the next five minutes. Prizes are paid out
-              straight to your wallet.
+              Join a live contest or start with the free practice library. Prizes
+              are paid out automatically to your wallet.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <ButtonLink href="/register" className="bg-white text-orange-700 hover:bg-orange-50">

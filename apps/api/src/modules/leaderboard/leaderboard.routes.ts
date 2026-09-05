@@ -3,7 +3,12 @@ import { leaderboardService } from "./leaderboard.service.js"
 import { authenticate, optionalAuth } from "../auth/middleware/auth.middleware.js"
 import { validateRequest } from "../../middlewares/validate-request.js"
 import { sendSuccess } from "../../utils/response.js"
-import { leaderboardSchema, myRankSchema } from "./leaderboard.validation.js"
+import {
+  leaderboardSchema,
+  myRankSchema,
+  weeklyLeaderboardSchema,
+  availableWeeksSchema,
+} from "./leaderboard.validation.js"
 import type { Request, Response, NextFunction } from "express"
 
 export const leaderboardRouter: Router = Router()
@@ -85,6 +90,100 @@ leaderboardRouter.get(
         req.params.contestId as string,
       )
       sendSuccess(res, result)
+    } catch (err) {
+      next(err)
+    }
+  },
+)
+
+/**
+ * @openapi
+ * /contests/{contestId}/leaderboard/weekly:
+ *   get:
+ *     tags: [Leaderboards]
+ *     summary: Weekly leaderboard for eternal contests
+ *     description: >
+ *       Ranked by best submission score within a Monday–Sunday (UTC) window.
+ *       Defaults to the current week if `week` is omitted.
+ *     parameters:
+ *       - in: path
+ *         name: contestId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 100
+ *           maximum: 100
+ *       - in: query
+ *         name: week
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Any date within the target week (snapped to Monday)
+ *     responses:
+ *       200:
+ *         description: Ranked entries for the week
+ */
+leaderboardRouter.get(
+  "/:contestId/leaderboard/weekly",
+  optionalAuth,
+  validateRequest(weeklyLeaderboardSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 100
+      const week = req.query.week ? new Date(req.query.week as string) : undefined
+      const result = await leaderboardService.getWeeklyLeaderboard(
+        req.params.contestId as string,
+        limit,
+        week,
+        req.user,
+      )
+      sendSuccess(res, result)
+    } catch (err) {
+      next(err)
+    }
+  },
+)
+
+/**
+ * @openapi
+ * /contests/{contestId}/leaderboard/weeks:
+ *   get:
+ *     tags: [Leaderboards]
+ *     summary: Available weeks for an eternal contest
+ *     description: >
+ *       Returns recent week start dates (Mondays) that have submissions.
+ *     parameters:
+ *       - in: path
+ *         name: contestId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 12
+ *           maximum: 52
+ *     responses:
+ *       200:
+ *         description: Array of ISO week start dates
+ */
+leaderboardRouter.get(
+  "/:contestId/leaderboard/weeks",
+  optionalAuth,
+  validateRequest(availableWeeksSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 12
+      const weeks = await leaderboardService.getAvailableWeeks(
+        req.params.contestId as string,
+        limit,
+      )
+      sendSuccess(res, { weeks })
     } catch (err) {
       next(err)
     }

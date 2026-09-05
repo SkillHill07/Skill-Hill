@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Mail, Phone, MapPin } from "lucide-react"
+import { Mail } from "lucide-react"
 
 export interface ContactFormFields {
   emailPlaceholder?: string
@@ -65,21 +65,9 @@ export default function Contact6({
   },
   cards = [
     {
-      icon: <Phone className="h-6 w-6" />,
-      title: "+91 98765 43210",
-      description: "Available Mon-Fri, 9am - 6pm IST. Call us for immediate assistance.",
-      variant: "secondary",
-    },
-    {
       icon: <Mail className="h-6 w-6" />,
-      title: "support@skillhill.dev",
-      description: "Drop us an email anytime. We typically reply within 24 hours.",
-      variant: "secondary",
-    },
-    {
-      icon: <MapPin className="h-6 w-6" />,
-      title: "Headquarters",
-      description: "123 Innovation Drive, Tech Valley, Bangalore, India.",
+      title: "Email us",
+      description: "support@skillhill.dev — we typically reply within 24 hours.",
       variant: "secondary",
     },
   ],

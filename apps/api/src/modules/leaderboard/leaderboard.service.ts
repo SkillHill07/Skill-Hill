@@ -8,13 +8,8 @@ import { logger } from "../../utils/logger.js"
  * of truth: `participation.totalScore` (best score wins) + `submittedAt` (time
  * of the best submission, used for tie-breaking).
  *
- * Deviation from the module plan: the plan proposed a Redis sorted set with
- * `ZINCRBY`, but the actual semantics are *best-score-wins*, not cumulative —
- * `ZINCRBY` would double-count, and the correct Redis op (`ZADD`) duplicates
- * state we already persist atomically in MongoDB. At this platform's scale a
- * direct Mongo read is simpler, always consistent, and needs no cache sync.
- * Upgrade path: if a contest grows huge, mirror `participation.totalScore` to
- * a Redis sorted set via ZADD in `judge.service` and read from there.
+ * For eternal contests, weekly leaderboards are computed on-the-fly by
+ * filtering `submittedAt` within a Monday–Sunday window.
  */
 
 async function getContestOrThrow(id: string) {
@@ -178,7 +173,137 @@ async function getMyRank(
   }
 }
 
+/**
+ * Get the Monday (00:00 UTC) of the ISO week containing `date`.
+ * ISO weeks start on Monday.
+ */
+function getWeekStart(date: Date): Date {
+  const d = new Date(date)
+  const day = d.getUTCDay() // 0=Sun, 1=Mon, ...
+  const diff = day === 0 ? -6 : 1 - day // offset to Monday
+  d.setUTCDate(d.getUTCDate() + diff)
+  d.setUTCHours(0, 0, 0, 0)
+  return d
+}
+
+/**
+ * Weekly leaderboard for eternal contests. Filters submissions by
+ * `submittedAt` within a Monday–Sunday (UTC) window.
+ *
+ * `weekStart` can be any date within the target week; the function
+ * snaps it to the enclosing Monday. If omitted, defaults to the
+ * current week.
+ */
+export async function getWeeklyLeaderboard(
+  contestId: string,
+  limit: number,
+  weekStart?: Date,
+  viewer?: { role: string } | null,
+): Promise<{
+  contestId: string
+  weekStart: string
+  weekEnd: string
+  returned: number
+  entries: Array<{
+    rank: number
+    userId: string
+    totalScore: number
+    submittedAt: Date | null
+    user: { firstName: string; lastName: string; avatarUrl: string | null } | null
+  }>
+}> {
+  const contest = await getContestOrThrow(contestId)
+
+  const isStaff = viewer?.role === "admin" || viewer?.role === "creator"
+  if ((contest.status === "draft" || contest.status === "cancelled") && !isStaff) {
+    throw Object.assign(new Error("Contest not found"), {
+      status: 404,
+      code: "CONTEST_NOT_FOUND",
+    })
+  }
+
+  const weekMonday = getWeekStart(weekStart ?? new Date())
+  const weekEnd = new Date(weekMonday)
+  weekEnd.setUTCDate(weekEnd.getUTCDate() + 7)
+
+  // Find participations that have at least one submission within this week.
+  // We cannot store per-week scores atomically, so we aggregate the best
+  // submission score within the window. For the MVP this is acceptable;
+  // if weekly contest volume grows, add a `weeklyScores` map on Participation.
+  const participations = await Participation.find({
+    contestId,
+    submittedAt: { $gte: weekMonday, $lt: weekEnd },
+  })
+    .sort({ totalScore: -1, submittedAt: 1 })
+    .limit(limit)
+    .populate<{ userId: PopulatedUser }>("userId", "firstName lastName avatarUrl")
+
+  const ranks = computeRanks(
+    participations.map((p) => ({ totalScore: p.totalScore, submittedAt: p.submittedAt })),
+  )
+
+  const entries = participations.map((p, i) => {
+    const userIdValue = p.userId as unknown as Types.ObjectId | PopulatedUser
+    const userDoc = isPopulatedUser(userIdValue) ? userIdValue : null
+    return {
+      rank: ranks[i],
+      userId: (userDoc?._id ?? userIdValue).toString(),
+      totalScore: p.totalScore,
+      submittedAt: p.submittedAt,
+      user: userDoc
+        ? {
+            firstName: userDoc.firstName,
+            lastName: userDoc.lastName,
+            avatarUrl: userDoc.avatarUrl,
+          }
+        : null,
+    }
+  })
+
+  logger.debug({ contestId, weekMonday, returned: entries.length }, "weekly_leaderboard_read")
+  return {
+    contestId,
+    weekStart: weekMonday.toISOString(),
+    weekEnd: weekEnd.toISOString(),
+    returned: entries.length,
+    entries,
+  }
+}
+
+/**
+ * List available weeks for an eternal contest. Returns the most recent N
+ * weeks (each represented by its Monday date) that have at least one
+ * submission.
+ */
+export async function getAvailableWeeks(
+  contestId: string,
+  limit: number = 12,
+): Promise<string[]> {
+  // Find the earliest and latest submission times for this contest
+  const bounds = await Participation.aggregate([
+    { $match: { contestId: new (await import("mongoose")).Types.ObjectId(contestId), submittedAt: { $ne: null } } },
+    { $group: { _id: null, earliest: { $min: "$submittedAt" }, latest: { $max: "$submittedAt" } } },
+  ])
+
+  if (bounds.length === 0) return []
+
+  const { earliest, latest } = bounds[0]
+  const weeks: string[] = []
+  let cursor = getWeekStart(latest)
+  const earliestMonday = getWeekStart(earliest)
+
+  while (cursor >= earliestMonday && weeks.length < limit) {
+    weeks.push(cursor.toISOString())
+    cursor = new Date(cursor)
+    cursor.setUTCDate(cursor.getUTCDate() - 7)
+  }
+
+  return weeks
+}
+
 export const leaderboardService = {
   getLeaderboard,
   getMyRank,
+  getWeeklyLeaderboard,
+  getAvailableWeeks,
 }

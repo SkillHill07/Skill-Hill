@@ -18,14 +18,19 @@ export const createContestSchema = z.object({
       errorMap: () => ({ message: "Type must be free or paid" }),
     }).default("free"),
     startTime: z.coerce.date({ invalid_type_error: "Start time must be a valid date" }),
-    endTime: z.coerce.date({ invalid_type_error: "End time must be a valid date" }),
+    isEternal: z.boolean().default(false),
+    endTime: z.coerce.date({ invalid_type_error: "End time must be a valid date" }).optional(),
     entryFee: z.number().int("Entry fee must be an integer (paise)").nonnegative("Entry fee cannot be negative").optional(),
     prizePool: z.number().int("Prize pool must be an integer (paise)").nonnegative("Prize pool cannot be negative"),
     maxParticipants: z.number().int().positive("Max participants must be at least 1").optional(),
     rules: z.string().max(20000, "Rules must be at most 20000 characters").optional(),
   }).refine(
-    (data) => data.endTime.getTime() > data.startTime.getTime(),
-    { message: "endTime must be after startTime", path: ["endTime"] },
+    (data) => {
+      if (data.isEternal) return true
+      if (!data.endTime) return false
+      return data.endTime.getTime() > data.startTime.getTime()
+    },
+    { message: "endTime must be after startTime (or set isEternal: true)", path: ["endTime"] },
   ).superRefine((data, ctx) => {
     // Strict fee coupling: free contests cannot charge, paid contests must charge.
     if (data.type === "paid" && (data.entryFee === undefined || data.entryFee <= 0)) {
@@ -65,6 +70,7 @@ export const updateContestSchema = z.object({
       errorMap: () => ({ message: "Type must be free or paid" }),
     }).optional(),
     startTime: z.coerce.date({ invalid_type_error: "Start time must be a valid date" }).optional(),
+    isEternal: z.boolean().optional(),
     endTime: z.coerce.date({ invalid_type_error: "End time must be a valid date" }).optional(),
     entryFee: z.number().int("Entry fee must be an integer (paise)").nonnegative("Entry fee cannot be negative").optional(),
     prizePool: z.number().int("Prize pool must be an integer (paise)").nonnegative("Prize pool cannot be negative").optional(),
@@ -72,12 +78,13 @@ export const updateContestSchema = z.object({
     rules: z.string().max(20000, "Rules must be at most 20000 characters").optional(),
   }).refine(
     (data) => {
+      if (data.isEternal) return true
       if (data.startTime && data.endTime) {
         return data.endTime.getTime() > data.startTime.getTime()
       }
       return true
     },
-    { message: "endTime must be after startTime", path: ["endTime"] },
+    { message: "endTime must be after startTime (or set isEternal: true)", path: ["endTime"] },
   ).superRefine((data, ctx) => {
     // Switching to paid requires a positive entry fee. Free contests are
     // normalized to entryFee = 0 in the service, so no check needed here
@@ -142,8 +149,8 @@ export const startContestSchema = z.object({
 
 export const listContestsSchema = z.object({
   query: z.object({
-    status: z.enum(["active", "upcoming", "settled", "frozen", "cancelled", "draft"], {
-      errorMap: () => ({ message: "Status must be one of: active, upcoming, settled, frozen, cancelled, draft" }),
+    status: z.enum(["active", "upcoming", "settled", "frozen", "cancelled", "draft", "always_open"], {
+      errorMap: () => ({ message: "Status must be one of: active, upcoming, settled, frozen, cancelled, draft, always_open" }),
     }).optional(),
     problemType: z.enum(["coding", "mcq", "mixed"], {
       errorMap: () => ({ message: "problemType must be coding, mcq, or mixed" }),

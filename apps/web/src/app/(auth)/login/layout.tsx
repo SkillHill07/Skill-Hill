@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 
 export const metadata: Metadata = {
   title: "Sign in",
-  description: "Sign in to SkillHill to join coding contests and compete for cash prizes.",
+  description: "Sign in to your SkillHill account.",
 }
 
 export default function LoginLayout({ children }: { children: React.ReactNode }) {

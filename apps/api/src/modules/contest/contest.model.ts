@@ -7,7 +7,8 @@ export interface IContest extends Document {
   description: string
   problemIds: Types.ObjectId[]
   startTime: Date
-  endTime: Date
+  endTime: Date | null
+  isEternal: boolean
   type: ContestType // "free" forces entryFee = 0
   problemType: "coding" | "mcq" | "mixed"
   entryFee: number // paise (2000 = ₹20)
@@ -51,7 +52,12 @@ const contestSchema = new Schema<IContest>(
     },
     endTime: {
       type: Date,
-      required: [true, "End time is required"],
+      required: false,
+      default: null,
+    },
+    isEternal: {
+      type: Boolean,
+      default: false,
     },
     type: {
       type: String,
@@ -127,5 +133,7 @@ const contestSchema = new Schema<IContest>(
 contestSchema.index({ status: 1, startTime: 1 })
 // Leaderboard/prize reads by contest
 contestSchema.index({ endTime: 1 })
+// Eternal contests (no endTime)
+contestSchema.index({ isEternal: 1, status: 1 })
 
 export const Contest: Model<IContest> = model<IContest>("Contest", contestSchema)

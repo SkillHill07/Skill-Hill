@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   ArrowLeft,
   Clock3,
@@ -19,10 +19,9 @@ import {
   XCircle,
 } from "lucide-react"
 import { api } from "@/lib/api"
-import { Badge, Button, Card, CardContent, ErrorBanner, Skeleton } from "./ui"
+import { Badge, Button, ErrorBanner, Skeleton } from "./ui"
 import { CodeEditor } from "./workspace/code-editor"
 import { ResultsPanel, type WorkspaceSubmission } from "./workspace/results-panel"
-import { inr } from "@/lib/format"
 import { ProblemDescription } from "./problem-description"
 
 interface PublicTestCase {
@@ -45,6 +44,7 @@ interface PracticeProblemDetail {
   solutionTemplate: Record<string, string>
   testCases: PublicTestCase[]
   options: string[]
+  explanation: string
   mcqLayout: "grid" | "list"
   contestId: {
     _id: string
@@ -112,6 +112,8 @@ export function ProblemViewer({ problemSlug }: { problemSlug: string }) {
   const [history, setHistory] = useState<Array<{ id: string; mode: string; status: string; score: number; at: Date }>>([])
   const [activeTab, setActiveTab] = useState<Tab>("description")
   const [resultTab, setResultTab] = useState<"testcase" | "result">("testcase")
+  const [mcqResult, setMcqResult] = useState<{ correct: boolean; correctAnswer: number; points: number; explanation: string } | null>(null)
+  const [showAnswer, setShowAnswer] = useState(false)
 
   const problemLanguages = useMemo(() => {
     if (!problem || problem.type === "mcq") return []
@@ -141,43 +143,50 @@ export function ProblemViewer({ problemSlug }: { problemSlug: string }) {
     setBusy(mode)
     setRunError(null)
     setSubmission(null)
+    setMcqResult(null)
     setLiveStatus("queued")
     try {
-      const payload =
-        problem.type === "mcq"
-          ? { problemId: problem._id, code: mcqChoice?.toString() ?? "", mode: "submit" }
-          : { problemId: problem._id, language, code, mode }
-      const result = await api.post<{ _id: string; status: string; totalScore: number }>(
-        `/contests/${problem.contestId?._id}/submissions`,
-        payload,
-      )
-      const newEntry = {
-        id: result._id,
-        mode: "submit",
-        status: "pending",
-        score: result.totalScore,
-        at: new Date(),
-      }
-      setHistory((prev) => [newEntry, ...prev].slice(0, 10))
-      setLiveStatus("running")
-      let attempts = 0
-      const poll = setInterval(async () => {
-        attempts++
-        try {
-          const sub = await api.get<WorkspaceSubmission>(`/contests/${problem.contestId?._id}/submissions/${result._id}`)
-          if (sub && ["accepted", "rejected", "error", "timeout"].includes(sub.status)) {
-            clearInterval(poll)
-            setSubmission(sub)
-            setLiveStatus(null)
-            setHistory((prev) =>
-              prev.map((h) => (h.id === result._id ? { ...h, status: sub.status, score: sub.totalScore } : h)),
-            )
-          }
-        } catch {
-          // ignore poll errors
+      if (problem.type === "mcq") {
+        const result = await api.post<{ correct: boolean; correctAnswer: number; points: number; explanation: string }>(
+          `/problems/${problem._id}/check-mcq`,
+          { selectedOption: mcqChoice },
+        )
+        setMcqResult(result)
+        setLiveStatus(null)
+      } else {
+        const payload = { problemId: problem._id, language, code, mode }
+        const result = await api.post<{ _id: string; status: string; totalScore: number }>(
+          `/contests/${problem.contestId?._id}/submissions`,
+          payload,
+        )
+        const newEntry = {
+          id: result._id,
+          mode: "submit",
+          status: "pending",
+          score: result.totalScore,
+          at: new Date(),
         }
-        if (attempts > 30) clearInterval(poll)
-      }, 1000)
+        setHistory((prev) => [newEntry, ...prev].slice(0, 10))
+        setLiveStatus("running")
+        let attempts = 0
+        const poll = setInterval(async () => {
+          attempts++
+          try {
+            const sub = await api.get<WorkspaceSubmission>(`/contests/${problem.contestId?._id}/submissions/${result._id}`)
+            if (sub && ["accepted", "rejected", "error", "timeout"].includes(sub.status)) {
+              clearInterval(poll)
+              setSubmission(sub)
+              setLiveStatus(null)
+              setHistory((prev) =>
+                prev.map((h) => (h.id === result._id ? { ...h, status: sub.status, score: sub.totalScore } : h)),
+              )
+            }
+          } catch {
+            // ignore poll errors
+          }
+          if (attempts > 30) clearInterval(poll)
+        }, 1000)
+      }
     } catch (err) {
       setRunError((err as Error).message)
       setLiveStatus(null)
@@ -288,7 +297,7 @@ export function ProblemViewer({ problemSlug }: { problemSlug: string }) {
                       type="radio"
                       name={`mcq-${problem._id}`}
                       checked={mcqChoice === i}
-                      onChange={() => setMcqChoice(i)}
+                      onChange={() => { setMcqChoice(i); setMcqResult(null); setShowAnswer(false) }}
                       className="sr-only"
                     />
                     <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold transition-colors ${
@@ -318,9 +327,56 @@ export function ProblemViewer({ problemSlug }: { problemSlug: string }) {
             </Button>
 
             {/* Result */}
-            {(submission || liveStatus) && (
+            {(mcqResult || liveStatus) && (
               <div className="mt-6">
-                <ResultsPanel submission={submission} liveStatus={liveStatus} history={history} />
+                {mcqResult ? (
+                  <div className={`rounded-xl border-2 p-4 ${
+                    mcqResult.correct
+                      ? "border-green-500 bg-green-500/10"
+                      : "border-red-500 bg-red-500/10"
+                  }`}>
+                    {mcqResult.correct ? (
+                      <div className="text-center">
+                        <CheckCircle2 className="mx-auto h-8 w-8 text-green-500" />
+                        <p className="mt-2 text-sm font-semibold text-green-700 dark:text-green-400">Correct!</p>
+                        <p className="text-xs text-muted-foreground">+{mcqResult.points} points</p>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <XCircle className="mx-auto h-8 w-8 text-red-500" />
+                        <p className="mt-2 text-sm font-semibold text-red-700 dark:text-red-400">Incorrect</p>
+                        {!showAnswer && (
+                          <button
+                            type="button"
+                            onClick={() => setShowAnswer(true)}
+                            className="mt-2 text-xs font-medium text-orange-600 hover:underline dark:text-orange-400 cursor-pointer"
+                          >
+                            Show answer
+                          </button>
+                        )}
+                        {showAnswer && (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Correct answer: {String.fromCharCode(65 + mcqResult.correctAnswer)}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    {showAnswer && mcqResult.explanation && (
+                      <div className="mt-3 rounded-lg bg-background/60 p-3 text-left">
+                        <p className="text-xs font-semibold text-muted-foreground mb-1">Explanation</p>
+                        <p className="text-sm text-muted-foreground whitespace-pre-line">{mcqResult.explanation}</p>
+                      </div>
+                    )}
+                    {mcqResult.correct && mcqResult.explanation && (
+                      <div className="mt-3 rounded-lg bg-background/60 p-3 text-left">
+                        <p className="text-xs font-semibold text-muted-foreground mb-1">Explanation</p>
+                        <p className="text-sm text-muted-foreground whitespace-pre-line">{mcqResult.explanation}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <ResultsPanel submission={submission} liveStatus={liveStatus} history={history} />
+                )}
               </div>
             )}
 
@@ -328,9 +384,9 @@ export function ProblemViewer({ problemSlug }: { problemSlug: string }) {
             {problem.contestId && (
               <div className="mt-6 rounded-xl border border-border bg-muted/30 p-4 text-center">
                 <p className="text-xs text-muted-foreground">
-                  Want to compete for real prizes?{" "}
+                  Like this problem?{" "}
                   <Link href={`/contests/${problem.contestId._id}`} className="font-medium text-orange-600 hover:underline dark:text-orange-400">
-                    Join the contest
+                    Check out the contest it came from
                   </Link>
                 </p>
               </div>
@@ -466,14 +522,6 @@ export function ProblemViewer({ problemSlug }: { problemSlug: string }) {
           </div>
         </div>
       </div>
-
-      {/* CTA */}
-      {problem.contestId && (
-        <div className="flex items-center justify-between border-t border-border bg-muted/30 px-4 py-2">
-          <p className="text-xs text-muted-foreground">Want to compete for real prizes? Join the full contest for leaderboard rankings.</p>
-          <Button size="sm" className="h-7 text-xs" onClick={() => (window.location.href = `/contests/${problem.contestId?._id}`)}>Join contest</Button>
-        </div>
-      )}
     </div>
   )
 }

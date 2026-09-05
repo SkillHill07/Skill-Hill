@@ -70,7 +70,7 @@ function LoginInner() {
         </Link>
         <h1 className="mt-6 text-2xl font-bold tracking-tight">Welcome back</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Sign in to compete and win prizes
+          Sign in to your account
         </p>
       </div>
 
@@ -84,7 +84,10 @@ function LoginInner() {
               href={googleUrl?.url ?? "#"}
               aria-disabled={!googleUrl?.url}
               onClick={(e) => {
-                if (!googleUrl?.url) e.preventDefault()
+                if (!googleUrl?.url) {
+                  e.preventDefault()
+                  setError("Google sign-in is not configured yet.")
+                }
               }}
               className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
             >
@@ -104,7 +107,10 @@ function LoginInner() {
               href={githubUrl?.url ?? "#"}
               aria-disabled={!githubUrl?.url}
               onClick={(e) => {
-                if (!githubUrl?.url) e.preventDefault()
+                if (!githubUrl?.url) {
+                  e.preventDefault()
+                  setError("GitHub sign-in is not configured yet.")
+                }
               }}
               className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
             >

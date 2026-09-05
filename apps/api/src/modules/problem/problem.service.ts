@@ -117,6 +117,7 @@ async function listPracticeProblems(filters: {
 
   const practiceContests = await Contest.find({
     status: { $in: PRACTICE_CONTEST_STATUSES },
+    type: "free",
   }).select("_id")
   if (practiceContests.length === 0) {
     return { problems: [], total: 0, page, limit, totalPages: 0 }
@@ -153,8 +154,8 @@ async function getPracticeProblem(problemId: string): Promise<IProblem> {
     "contestId",
     "title slug status type entryFee",
   )
-  const contest = problem?.contestId as unknown as { status?: string } | null
-  if (!problem || !contest || !PRACTICE_CONTEST_STATUSES.includes(contest.status ?? "")) {
+  const contest = problem?.contestId as unknown as { status?: string; type?: string } | null
+  if (!problem || !contest || !PRACTICE_CONTEST_STATUSES.includes(contest.status ?? "") || contest.type === "paid") {
     throw Object.assign(new Error("Problem not found"), {
       status: 404,
       code: "PROBLEM_NOT_FOUND",
@@ -170,6 +171,7 @@ async function getPracticeProblem(problemId: string): Promise<IProblem> {
 async function getPracticeProblemBySlug(slug: string): Promise<IProblem> {
   const practiceContests = await Contest.find({
     status: { $in: PRACTICE_CONTEST_STATUSES },
+    type: "free",
   }).select("_id")
 
   const problem = await Problem.findOne({
@@ -184,6 +186,55 @@ async function getPracticeProblemBySlug(slug: string): Promise<IProblem> {
     })
   }
   return problem
+}
+
+/**
+ * Check an MCQ answer for a practice problem. No auth required, no
+ * persistence — purely advisory. Reads correctAnswer directly from the
+ * document (before the toJSON transform strips it).
+ */
+async function checkMcqAnswer(
+  problemId: string,
+  selectedOption: number,
+): Promise<{ correct: boolean; correctAnswer: number; points: number; explanation: string }> {
+  const practiceContests = await Contest.find({
+    status: { $in: PRACTICE_CONTEST_STATUSES },
+    type: "free",
+  }).select("_id")
+
+  const problem = await Problem.findOne({
+    _id: problemId,
+    contestId: { $in: practiceContests.map((c) => c._id) },
+  })
+
+  if (!problem) {
+    throw Object.assign(new Error("Problem not found"), {
+      status: 404,
+      code: "PROBLEM_NOT_FOUND",
+    })
+  }
+
+  if (problem.type !== "mcq") {
+    throw Object.assign(new Error("This endpoint is only for MCQ problems"), {
+      status: 400,
+      code: "NOT_MCQ",
+    })
+  }
+
+  if (!Number.isInteger(selectedOption) || selectedOption < 0 || selectedOption >= problem.options.length) {
+    throw Object.assign(new Error("Selected option is out of range"), {
+      status: 400,
+      code: "INVALID_OPTION",
+    })
+  }
+
+  const correct = problem.correctAnswer === selectedOption
+  return {
+    correct,
+    correctAnswer: problem.correctAnswer!,
+    points: correct ? problem.points : 0,
+    explanation: problem.explanation ?? "",
+  }
 }
 
 async function createProblem(
@@ -412,6 +463,7 @@ export const problemService = {
   listPracticeProblems,
   getPracticeProblem,
   getPracticeProblemBySlug,
+  checkMcqAnswer,
   createProblem,
   updateProblem,
   deleteProblem,

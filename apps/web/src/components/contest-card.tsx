@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Code2, ListChecks, Users } from "lucide-react"
+import { Code2, Infinity as InfinityIcon, ListChecks, Users } from "lucide-react"
 import { ContestStatusBadge } from "./status-badge"
 import { Badge, Card, CardContent } from "./ui"
 import { formatDate, inr } from "@/lib/format"
@@ -15,7 +15,8 @@ export interface ContestCardData {
   maxParticipants: number | null
   status: string
   startTime: string
-  endTime: string
+  endTime: string | null
+  isEternal?: boolean
   participantCount?: number
   description?: string
 }
@@ -29,6 +30,9 @@ export function ContestCard({ contest, participants }: { contest: ContestCardDat
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
               <ContestStatusBadge status={contest.status} />
+              {contest.isEternal && (
+                <Badge tone="blue"><InfinityIcon className="h-3 w-3" /> Always Open</Badge>
+              )}
               {contest.problemType === "mcq" && (
                 <Badge tone="amber"><ListChecks className="h-3 w-3" /> MCQ</Badge>
               )}
@@ -56,7 +60,11 @@ export function ContestCard({ contest, participants }: { contest: ContestCardDat
           )}
 
           <div className="mt-auto flex items-center justify-between text-xs text-muted-foreground">
-            <span>{formatDate(contest.startTime)}</span>
+            <span>
+              {contest.isEternal
+                ? "Always open"
+                : formatDate(contest.startTime)}
+            </span>
             <span className="flex items-center gap-1">
               <Users className="h-3.5 w-3.5" />
               {count}

@@ -27,6 +27,7 @@ export interface IProblem extends Document {
   testCases: ITestCase[]
   options: string[] // mcq only
   correctAnswer: number | null // mcq only — 0-based index into options
+  explanation: string // mcq only — shown after answer is revealed
   mcqLayout: "grid" | "list" // mcq only — 2x2 grid or single-column list
   status: ProblemStatus
 }
@@ -158,6 +159,11 @@ const problemSchema = new Schema<IProblem>(
         validator: (v: number | null) => v === null || (Number.isInteger(v) && v >= 0),
         message: "correctAnswer must be a non-negative integer index or null",
       },
+    },
+    explanation: {
+      type: String,
+      default: "",
+      maxlength: [5000, "Explanation must be at most 5000 characters"],
     },
     mcqLayout: {
       type: String,
